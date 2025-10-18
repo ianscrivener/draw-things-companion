@@ -1,20 +1,20 @@
 {
   "name": "draw-things-companion",
-  "private": true,
+  "private": false,
   "version": "0.1.0",
   "type": "module",
+  "author": "Ian Scrivener",
+  "license": "Apache-2.0",
   "scripts": {
     "tauri": "tauri",
     "dev": "npx next dev",
     "build": "npx next build",
     "start": "npx next start",
-    "lint": "npx next lint"
+    "lint": "npx next lint",
+    "mock": "cd src && node mock_server.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
     "next": "^15.5.6"
-    },
-  "dependencies": {
-    
-  }
+    }
 }

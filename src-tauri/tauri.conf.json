@@ -1,13 +1,14 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "draw-things-companion",
+  "productName": "drawthings_companion",
   "version": "0.1.0",
-  "identifier": "com.ianscrivener.draw-things-companion",
+  "identifier": "com.ianscrivener.drawthings_companion",
+
   "app": {
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "draw-things-companion",
+        "title": "DrawThings Companion",
         "width": 800,
         "height": 600
       }
