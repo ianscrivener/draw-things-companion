@@ -33,5 +33,66 @@
     "beforeBuildCommand": "cd src && npm run build",
     "devUrl": "http://localhost:3000",
     "frontendDist": "../src/app/public"
-  }  
+  },
+  "plugins": {
+    "shell": {
+      "scope": [
+        {
+          "name": "bash",
+          "cmd": "bash",
+          "args": true
+        },
+        {
+          "name": "jq",
+          "cmd": "jq",
+          "args": true
+        },
+        {
+          "name": "mv",
+          "cmd": "mv",
+          "args": true
+        },
+        {
+          "name": "ls",
+          "cmd": "ls",
+          "args": true
+        },
+        {
+          "name": "cp",
+          "cmd": "cp",
+          "args": true
+        },
+        {
+          "name": "mkdir",
+          "cmd": "mkdir",
+          "args": true
+        },
+        {
+          "name": "xz",
+          "cmd": "xz",
+          "args": true
+        },
+        {
+          "name": "zip",
+          "cmd": "zip",
+          "args": true
+        },
+        {
+          "name": "rm",
+          "cmd": "rm",
+          "args": true
+        },
+        {
+          "name": "openssl",
+          "cmd": "openssl",
+          "args": true
+        },
+        {
+          "name": "shasum",
+          "cmd": "shasum",
+          "args": true
+        }
+      ]
+    }
+  }
 }
