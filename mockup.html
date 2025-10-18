@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DrawThings Companion - Mockup</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             margin: 0;
@@ -50,21 +51,35 @@
             cursor: pointer;
             transition: background-color 0.2s;
             font-size: 13px;
+            font-weight: 450;
             color: #333;
             text-align: center;
         }
 
         .nav-item:hover {
             background-color: #e8e8e8;
+            
         }
 
         .nav-item.active {
-            background-color: #ddd;
+            {{/*  background-color: #ddd;  */}}
         }
 
         .nav-icon {
-            font-size: 24px;
+            width: 24px;
+            height: 24px;
             margin-bottom: 4px;
+            stroke-width: 2;
+            color: #333;
+        }
+
+        .nav-item.active .nav-icon {
+            color: #ff5f57;
+            font-weight:750;
+        }
+        .nav-item.active{
+            color: #ff5f57;
+            font-weight: 600;
         }
 
         /* Inner body - 2 rows, fills remaining width */
@@ -77,7 +92,7 @@
 
         /* Page title - 35px height, constrained width, centered */
         .page_title {
-            height: 35px;
+            height: 45px;
             min-width: 450px;
             max-width: 1200px;
             width: 100%;
@@ -85,6 +100,7 @@
             display: flex;
             align-items: center;
             padding: 0 20px;
+            padding-top: 10px;
         }
 
         .section-title {
@@ -104,6 +120,7 @@
             display: flex;
             flex-direction: column;
             padding: 20px;
+            padding-top: 10px;
             overflow: auto;
         }
 
@@ -152,40 +169,45 @@
             <!-- Nav - 90px fixed width -->
             <div class="nav">
                 <div class="nav-item">
-                    <div class="nav-icon">🐰</div>
+                    <i data-lucide="briefcase-business" class="nav-icon"></i>
                     <div>Stashes</div>
                 </div>
                 <div class="nav-item active">
-                    <div class="nav-icon">🐰</div>
+                    <i data-lucide="image" class="nav-icon"></i>
                     <div>Models</div>
                 </div>
                 <div class="nav-item">
-                    <div class="nav-icon">🐰</div>
+                    <i data-lucide="square-pen" class="nav-icon"></i>
                     <div>LoRAs</div>
                 </div>
                 <div class="nav-item">
-                    <div class="nav-icon">🐰</div>
-                    <div>Controls</div>
+                    <i data-lucide="factory" class="nav-icon"></i>
+                    <div>ControlNets</div>
                 </div>
                 <div class="nav-item">
-                    <div class="nav-icon">🐰</div>
+                    <i data-lucide="archive-restore" class="nav-icon"></i>
+                    <div>Embeddings</div>
+                </div>
+                <div class="nav-item">
+                    <i data-lucide="presentation" class="nav-icon"></i>
                     <div>Projects</div>
                 </div>
                 <div class="nav-item">
-                    <div class="nav-icon">🐰</div>
-                    <div>Embeds</div>
+                    <i data-lucide="file-json-2" class="nav-icon"></i>
+                    <div>Scripts</div>
                 </div>
                 <div class="nav-item">
-                    <div class="nav-icon">🐰</div>
+                    <i data-lucide="settings" class="nav-icon"></i>
                     <div>Settings</div>
                 </div>
+
             </div>
 
             <!-- Inner body (2 rows) -->
             <div class="inner_body">
                 <!-- Page title - 35px height -->
                 <div class="page_title">
-                    <div class="section-title">Main Models</div>
+                    <div class="section-title">Projects</div>
                 </div>
 
                 <!-- Content main - fills remaining height -->
@@ -210,5 +232,10 @@
             Ready
         </div>
     </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
 </body>
 </html>
