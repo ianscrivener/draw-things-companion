@@ -13,13 +13,13 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { id: 'stashes', icon: BriefcaseBusiness, label: 'Stashes' },
+  // { id: 'stashes', icon: BriefcaseBusiness, label: 'Stashes' },
   { id: 'models', icon: Image, label: 'Models' },
   { id: 'loras', icon: SquarePen, label: 'LoRAs' },
   { id: 'controlnets', icon: Factory, label: 'ControlNets' },
-  { id: 'embeddings', icon: ArchiveRestore, label: 'Embeddings' },
-  { id: 'projects', icon: Presentation, label: 'Projects' },
-  { id: 'scripts', icon: FileJson2, label: 'Scripts' },
+  // { id: 'embeddings', icon: ArchiveRestore, label: 'Embeddings' },
+  // { id: 'projects', icon: Presentation, label: 'Projects' },
+  // { id: 'scripts', icon: FileJson2, label: 'Scripts' },
   { id: 'settings', icon: Settings, label: 'Settings' }
 ];
 
