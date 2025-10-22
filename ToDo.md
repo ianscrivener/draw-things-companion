@@ -1,8 +1,10 @@
 # ToDo
 
+101. Delete embeddings
 
 
 
 
-**101. Make custom icons**
+
+**1001. Make custom icons**
 

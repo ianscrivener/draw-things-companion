@@ -2,13 +2,43 @@
 
 import { useState } from 'react';
 import Nav from '@/components/Nav';
+import StashesView from '@/components/views/StashesView';
+import ModelsView from '@/components/views/ModelsView';
+import LoRAsView from '@/components/views/LoRAsView';
+import ControlNetsView from '@/components/views/ControlNetsView';
+import EmbeddingsView from '@/components/views/EmbeddingsView';
+import ProjectsView from '@/components/views/ProjectsView';
+import ScriptsView from '@/components/views/ScriptsView';
+import SettingsView from '@/components/views/SettingsView';
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState('models');
 
   const handleNavigate = (section) => {
     setActiveSection(section);
-    console.log('Navigated to:', section);
+  };
+
+  const renderView = () => {
+    switch (activeSection) {
+      case 'stashes':
+        return <StashesView />;
+      case 'models':
+        return <ModelsView />;
+      case 'loras':
+        return <LoRAsView />;
+      case 'controlnets':
+        return <ControlNetsView />;
+      case 'embeddings':
+        return <EmbeddingsView />;
+      case 'projects':
+        return <ProjectsView />;
+      case 'scripts':
+        return <ScriptsView />;
+      case 'settings':
+        return <SettingsView />;
+      default:
+        return <ModelsView />;
+    }
   };
 
   return (
@@ -18,29 +48,9 @@ export default function Home() {
         {/* Navigation */}
         <Nav activeItem={activeSection} onNavigate={handleNavigate} />
 
-        {/* Inner body (2 rows) */}
+        {/* Inner body - render active view */}
         <div className="inner_body">
-          {/* Page title - 45px height */}
-          <div className="page_title">
-            <h1 className="section-title">
-              {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
-            </h1>
-          </div>
-
-          {/* Content main - fills remaining height */}
-          <div className="content_main">
-            <div className="content-columns">
-              <div className="column">
-                <div className="column-title">installed models</div>
-              </div>
-              <div className="column">
-                <div className="column-title">stashed models</div>
-              </div>
-              <div className="column">
-                <div className="column-title">info & metadata</div>
-              </div>
-            </div>
-          </div>
+          {renderView()}
         </div>
       </div>
 
@@ -66,61 +76,7 @@ export default function Home() {
           flex-direction: column;
           flex: 1;
           overflow: hidden;
-        }
-
-        .page_title {
-          height: 45px;
-          min-width: 450px;
-          max-width: 1200px;
-          width: 100%;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          padding: 0 20px;
-          padding-top: 10px;
-        }
-
-        .section-title {
-          font-size: 24px;
-          font-weight: 600;
-          color: #1a1a1a;
-        }
-
-        .content_main {
-          flex: 1;
-          min-width: 450px;
-          max-width: 1200px;
-          width: 100%;
-          margin: 0 auto;
-          background-color: #ffffff;
-          display: flex;
-          flex-direction: column;
-          padding: 20px;
-          padding-top: 10px;
-          overflow: auto;
-        }
-
-        .content-columns {
-          display: flex;
-          gap: 20px;
-          flex: 1;
-        }
-
-        .column {
-          flex: 1;
-          border: 2px dashed #ccc;
-          border-radius: 8px;
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          min-height: 400px;
-        }
-
-        .column-title {
-          font-size: 16px;
-          color: #0066cc;
-          font-weight: 500;
+          background: #fafafa;
         }
 
         .footer {

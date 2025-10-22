@@ -1,0 +1,6 @@
+{
+    "db_backup_interval_minutes":     3,
+    "db_backup_enable":               true,
+    "stash_count_max":                5,
+    "stash_enable":                   false
+}
