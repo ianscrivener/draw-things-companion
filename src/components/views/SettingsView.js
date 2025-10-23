@@ -1,16 +1,66 @@
 'use client';
 
-import { useState } from 'react';
-import { Settings, Folder, Database, Bell, Palette, Shield, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings, Folder } from 'lucide-react';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 
 export default function SettingsView() {
-  const [settings, setSettings] = useState({
-    drawThingsPath: '~/Library/Containers/com.liuliu.draw-things/Data/Documents',
-    databasePath: '~/Library/Application Support/DrawThingsCompanion/data.db',
-    notifications: true,
-    autoBackup: true,
-    theme: 'light'
+  const [paths, setPaths] = useState({
+    drawThingsPath: '',
+    stashPath: ''
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    loadPaths();
+  }, []);
+
+  async function loadPaths() {
+    try {
+      const appPaths = await invoke('get_app_paths');
+      setPaths({
+        drawThingsPath: appPaths.dt_base_dir,
+        stashPath: appPaths.stash_dir || ''
+      });
+    } catch (error) {
+      console.error('Failed to load paths:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleBrowseStash() {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: 'Select Stash Directory'
+      });
+
+      if (selected) {
+        setIsSaving(true);
+        await invoke('update_stash_dir', { newStashDir: selected });
+        setPaths(prev => ({ ...prev, stashPath: selected }));
+      }
+    } catch (error) {
+      console.error('Failed to update stash directory:', error);
+      alert('Failed to update stash directory: ' + error);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="view-container">
+        <div className="view-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p>Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   const settingsSections = [
     {
@@ -20,72 +70,17 @@ export default function SettingsView() {
       items: [
         {
           label: 'DrawThings Directory',
-          value: settings.drawThingsPath,
-          type: 'path'
+          value: paths.drawThingsPath,
+          type: 'readonly',
+          description: 'Location of DrawThings app data (read-only)'
         },
         {
-          label: 'Database Location',
-          value: settings.databasePath,
-          type: 'path'
-        }
-      ]
-    },
-    {
-      id: 'database',
-      title: 'Database',
-      icon: Database,
-      items: [
-        {
-          label: 'Auto Backup',
-          value: settings.autoBackup,
-          type: 'toggle'
-        },
-        {
-          label: 'Backup Location',
-          value: '~/Backups/DrawThingsCompanion',
-          type: 'path'
-        }
-      ]
-    },
-    {
-      id: 'appearance',
-      title: 'Appearance',
-      icon: Palette,
-      items: [
-        {
-          label: 'Theme',
-          value: settings.theme,
-          type: 'select',
-          options: ['light', 'dark', 'auto']
-        }
-      ]
-    },
-    {
-      id: 'notifications',
-      title: 'Notifications',
-      icon: Bell,
-      items: [
-        {
-          label: 'Enable Notifications',
-          value: settings.notifications,
-          type: 'toggle'
-        }
-      ]
-    },
-    {
-      id: 'about',
-      title: 'About',
-      icon: Info,
-      items: [
-        {
-          label: 'Version',
-          value: '1.0.0',
-          type: 'readonly'
-        },
-        {
-          label: 'Tauri Version',
-          value: '2.8.5',
-          type: 'readonly'
+          label: 'Stash Directory',
+          value: paths.stashPath,
+          type: 'path',
+          description: 'External directory for offloading models (configured in .env)',
+          onBrowse: handleBrowseStash,
+          disabled: true
         }
       ]
     }
@@ -115,17 +110,13 @@ export default function SettingsView() {
                     <div key={idx} className="setting-item">
                       <div className="setting-label">
                         <label>{item.label}</label>
+                        {item.description && (
+                          <span className="setting-description">{item.description}</span>
+                        )}
                       </div>
                       <div className="setting-control">
-                        {item.type === 'toggle' && (
-                          <label className="toggle-switch">
-                            <input
-                              type="checkbox"
-                              checked={item.value}
-                              onChange={() => {}}
-                            />
-                            <span className="toggle-slider"></span>
-                          </label>
+                        {item.type === 'readonly' && (
+                          <span className="readonly-value">{item.value}</span>
                         )}
                         {item.type === 'path' && (
                           <div className="path-input">
@@ -133,19 +124,16 @@ export default function SettingsView() {
                               type="text"
                               value={item.value}
                               readOnly
+                              placeholder="Not set"
                             />
-                            <button className="btn-browse">Browse</button>
+                            <button 
+                              className="btn-browse"
+                              onClick={item.onBrowse}
+                              disabled={item.disabled || isSaving}
+                            >
+                              {isSaving ? 'Saving...' : 'Browse'}
+                            </button>
                           </div>
-                        )}
-                        {item.type === 'select' && (
-                          <select value={item.value}>
-                            {item.options?.map((opt) => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        )}
-                        {item.type === 'readonly' && (
-                          <span className="readonly-value">{item.value}</span>
                         )}
                       </div>
                     </div>
@@ -242,54 +230,17 @@ export default function SettingsView() {
           color: #333;
         }
 
+        .setting-description {
+          display: block;
+          font-size: 12px;
+          color: #666;
+          margin-top: 4px;
+          font-weight: 400;
+        }
+
         .setting-control {
           display: flex;
           align-items: center;
-        }
-
-        .toggle-switch {
-          position: relative;
-          display: inline-block;
-          width: 48px;
-          height: 24px;
-        }
-
-        .toggle-switch input {
-          opacity: 0;
-          width: 0;
-          height: 0;
-        }
-
-        .toggle-slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: #ccc;
-          transition: 0.3s;
-          border-radius: 24px;
-        }
-
-        .toggle-slider:before {
-          position: absolute;
-          content: "";
-          height: 18px;
-          width: 18px;
-          left: 3px;
-          bottom: 3px;
-          background-color: white;
-          transition: 0.3s;
-          border-radius: 50%;
-        }
-
-        input:checked + .toggle-slider {
-          background-color: #ff5f57;
-        }
-
-        input:checked + .toggle-slider:before {
-          transform: translateX(24px);
         }
 
         .path-input {
@@ -316,26 +267,23 @@ export default function SettingsView() {
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
+          min-width: 80px;
         }
 
-        .btn-browse:hover {
+        .btn-browse:hover:not(:disabled) {
           background: #f5f5f5;
           border-color: #ff5f57;
         }
 
-        select {
-          padding: 8px 12px;
-          border: 1px solid #e0e0e0;
-          border-radius: 6px;
-          font-size: 14px;
-          background: white;
-          cursor: pointer;
-          min-width: 150px;
+        .btn-browse:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .readonly-value {
           font-size: 14px;
           color: #666;
+          font-family: monospace;
         }
       `}</style>
     </div>

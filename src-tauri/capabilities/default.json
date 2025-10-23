@@ -18,6 +18,7 @@
     "fs:allow-read-dir",
     "sql:allow-execute",
     "sql:allow-select",
-    "sql:allow-load"
+    "sql:allow-load",
+    "dialog:allow-open"
   ]
 }

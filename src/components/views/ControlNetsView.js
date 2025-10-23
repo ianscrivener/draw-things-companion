@@ -1,55 +1,44 @@
 'use client';
 
-import { Factory } from 'lucide-react';
+import TwoPaneManager from '../TwoPaneManager';
+import { useModels } from '../../hooks/useModels';
 
 export default function ControlNetsView() {
+  const {
+    macModels,
+    stashModels,
+    loading,
+    error,
+    hasUnsavedChanges,
+    addToMac,
+    removeFromMac,
+    reorderMac,
+    saveChanges,
+    cancelChanges,
+  } = useModels('controlnet');
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error Loading ControlNets</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="view-container">
-      <div className="view-header">
-        <div className="view-title">
-          <Factory size={28} />
-          <h1>ControlNets</h1>
-        </div>
-      </div>
-
-      <div className="view-content">
-        {/* Blank page content */}
-      </div>
-
-      <style jsx>{`
-        .view-container {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-
-        .view-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 24px 32px;
-          border-bottom: 1px solid #e0e0e0;
-        }
-
-        .view-title {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .view-title h1 {
-          margin: 0;
-          font-size: 24px;
-          font-weight: 600;
-        }
-
-        .view-content {
-          flex: 1;
-          padding: 32px;
-          overflow-y: auto;
-        }
-      `}</style>
-    </div>
+    <TwoPaneManager
+      modelType="controlnet"
+      title="ControlNet Models"
+      macModels={macModels}
+      stashModels={stashModels}
+      onReorder={reorderMac}
+      onAddToMac={addToMac}
+      onRemoveFromMac={removeFromMac}
+      onSave={saveChanges}
+      onCancel={cancelChanges}
+      hasUnsavedChanges={hasUnsavedChanges}
+      loading={loading}
+    />
   );
 }

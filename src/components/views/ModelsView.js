@@ -1,55 +1,44 @@
 'use client';
 
-import { Image } from 'lucide-react';
+import TwoPaneManager from '../TwoPaneManager';
+import { useModels } from '../../hooks/useModels';
 
 export default function ModelsView() {
+  const {
+    macModels,
+    stashModels,
+    loading,
+    error,
+    hasUnsavedChanges,
+    addToMac,
+    removeFromMac,
+    reorderMac,
+    saveChanges,
+    cancelChanges,
+  } = useModels('model');
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error Loading Models</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="view-container">
-      <div className="view-header">
-        <div className="view-title">
-          <Image size={28} />
-          <h1>Models</h1>
-        </div>
-      </div>
-
-      <div className="view-content">
-        {/* Blank page content */}
-      </div>
-
-      <style jsx>{`
-        .view-container {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-
-        .view-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 24px 32px;
-          border-bottom: 1px solid #e0e0e0;
-        }
-
-        .view-title {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .view-title h1 {
-          margin: 0;
-          font-size: 24px;
-          font-weight: 600;
-        }
-
-        .view-content {
-          flex: 1;
-          padding: 32px;
-          overflow-y: auto;
-        }
-      `}</style>
-    </div>
+    <TwoPaneManager
+      modelType="model"
+      title="Main Models"
+      macModels={macModels}
+      stashModels={stashModels}
+      onReorder={reorderMac}
+      onAddToMac={addToMac}
+      onRemoveFromMac={removeFromMac}
+      onSave={saveChanges}
+      onCancel={cancelChanges}
+      hasUnsavedChanges={hasUnsavedChanges}
+      loading={loading}
+    />
   );
 }

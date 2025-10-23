@@ -12,6 +12,7 @@
   "dependencies": {
     "@formkit/drag-and-drop": "^0.5.3",
     "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
     "@tauri-apps/plugin-fs": "^2.4.2",
     "@tauri-apps/plugin-shell": "^2.3.1",
     "@tauri-apps/plugin-sql": "^2.3.0",

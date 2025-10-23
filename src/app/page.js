@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Nav from '@/components/Nav';
+import SetupWizard from '@/components/SetupWizard';
 import StashesView from '@/components/views/StashesView';
 import ModelsView from '@/components/views/ModelsView';
 import LoRAsView from '@/components/views/LoRAsView';
@@ -10,13 +11,60 @@ import EmbeddingsView from '@/components/views/EmbeddingsView';
 import ProjectsView from '@/components/views/ProjectsView';
 import ScriptsView from '@/components/views/ScriptsView';
 import SettingsView from '@/components/views/SettingsView';
+import { useAppInitialization } from '../hooks/useAppInitialization';
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState('models');
+  const { initialized, loading, needsSetup, initializeApp } = useAppInitialization();
 
   const handleNavigate = (section) => {
     setActiveSection(section);
   };
+
+  const handleSetupComplete = async (dtBaseDir, stashDir) => {
+    return await initializeApp(dtBaseDir, stashDir);
+  };
+
+  // Show setup wizard if not initialized
+  if (needsSetup && !initialized) {
+    return <SetupWizard onComplete={handleSetupComplete} />;
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading DrawThings Companion...</p>
+        <style jsx>{`
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+          }
+          .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          p {
+            margin-top: 20px;
+            font-size: 16px;
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   const renderView = () => {
     switch (activeSection) {
