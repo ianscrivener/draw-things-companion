@@ -261,20 +261,12 @@ fn scan_directory_and_import(
 }
 
 /// Import a single model file into the database
-fn import_model_file(conn: &Connection, file_path: &Path) -> Result<i64, String> {
+fn import_model_file(conn: &Connection, file_path: &Path) -> Result<(), String> {
     let filename = file_path
         .file_name()
         .ok_or("Invalid filename")?
         .to_string_lossy()
         .to_string();
-    
-    // Check if already exists
-    if let Some(existing) = operations::get_model_by_filename(conn, &filename)
-        .map_err(|e| e.to_string())?
-    {
-        // Model already in database, skip
-        return Ok(existing.id.unwrap());
-    }
     
     // Get file metadata
     let file_size = file_ops::get_file_size(file_path)
@@ -285,20 +277,42 @@ fn import_model_file(conn: &Connection, file_path: &Path) -> Result<i64, String>
     // Determine model type from filename patterns
     let model_type = determine_model_type(&filename);
     
-    // Create model record
-    let model = crate::db::models::Model {
-        id: None,
+    // Determine if file is from Mac HD or Stash based on path
+    let path_str = file_path.to_string_lossy().to_lowercase();
+    let from_mac_hd = path_str.contains("library/containers/com.liuliu.draw-things");
+    
+    // Check if already exists
+    if let Some(mut existing) = operations::get_model_by_filename(conn, &filename)
+        .map_err(|e| e.to_string())?
+    {
+        // Update location flags
+        if from_mac_hd {
+            existing.exists_mac_hd = true;
+        } else {
+            existing.exists_stash = true;
+        }
+        operations::insert_or_update_model(conn, &existing)
+            .map_err(|e| format!("Failed to update model: {}", e))?;
+        return Ok(());
+    }
+    
+    // Create new model record
+    let model = crate::db::models::CkptModel {
         filename: filename.clone(),
         display_name: None,
         model_type,
         file_size: Some(file_size as i64),
         checksum: None, // Skip checksum for faster scanning
         source_path: Some(file_path.to_string_lossy().to_string()),
+        exists_mac_hd: from_mac_hd,
+        exists_stash: !from_mac_hd,
+        mac_display_order: None,
+        lora_strength: None,
         created_at: None,
         updated_at: None,
     };
     
-    operations::insert_model(conn, &model)
+    operations::insert_or_update_model(conn, &model)
         .map_err(|e| format!("Failed to insert model: {}", e))
 }
 

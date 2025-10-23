@@ -18,6 +18,6 @@ impl Database {
     }
 
     pub fn init_schema(&self) -> Result<()> {
-        schema::create_tables(&self.conn)
+        schema::migrate_database(&self.conn)
     }
 }

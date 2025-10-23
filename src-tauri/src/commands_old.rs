@@ -118,64 +118,51 @@ pub fn update_stash_dir(new_stash_dir: String, state: State<AppState>) -> Result
 
 // Model query commands
 #[tauri::command]
-pub fn get_models(state: State<AppState>) -> Result<Vec<ModelResponse>, String> {
+pub fn get_models(model_type: String, state: State<AppState>) -> Result<Vec<ModelWithMacInfo>, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::get_all_models(&conn).map_err(|e| e.to_string())
+    operations::get_models_by_type(&conn, &model_type).map_err(|e| e.to_string())
 }
 
 // Mac model commands
 #[tauri::command]
 pub fn add_model_to_mac(
-    filename: String,
+    model_id: i64,
     display_order: i32,
     state: State<AppState>,
 ) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::update_mac_hd_status(&conn, &filename, true, Some(display_order))
-        .map_err(|e| e.to_string())
+    
+    let mac_model = MacModel {
+        id: None,
+        model_id,
+        display_order,
+        is_visible: true,
+        custom_name: None,
+        lora_strength: None,
+    };
+    
+    operations::insert_mac_model(&conn, &mac_model).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
-pub fn remove_model_from_mac(filename: String, state: State<AppState>) -> Result<(), String> {
+pub fn remove_model_from_mac(model_id: i64, state: State<AppState>) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::update_mac_hd_status(&conn, &filename, false, None)
-        .map_err(|e| e.to_string())
+    operations::delete_mac_model(&conn, model_id).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn update_models_order(
-    updates: Vec<(String, i32)>,
+    updates: Vec<(i64, i32)>,
     state: State<AppState>,
 ) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::update_display_orders(&conn, &updates).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-pub fn update_model_name(
-    filename: String,
-    display_name: String,
-    state: State<AppState>,
-) -> Result<(), String> {
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::update_model_display_name(&conn, &filename, &display_name)
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-pub fn update_model_lora_strength(
-    filename: String,
-    strength: i32,
-    state: State<AppState>,
-) -> Result<(), String> {
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::update_lora_strength(&conn, &filename, strength)
-        .map_err(|e| e.to_string())
+    operations::update_mac_models_batch(&conn, updates).map_err(|e| e.to_string())
 }
 
 // File scanning and import commands
 #[tauri::command]
-pub fn scan_mac_models(state: State<AppState>) -> Result<ScanResult, String> {
+pub fn scan_mac_models(model_type: String, state: State<AppState>) -> Result<ScanResult, String> {
     let dt_base_dir = state
         .dt_base_dir
         .lock()
@@ -183,8 +170,10 @@ pub fn scan_mac_models(state: State<AppState>) -> Result<ScanResult, String> {
         .clone()
         .ok_or("DT_BASE_DIR not configured")?;
 
+    // All models are in the Models subdirectory
     let model_dir = dt_base_dir.join("Models");
-    let extensions = vec!["ckpt", "safetensors", "pth", "pt"];
+
+    let extensions = file_ops::get_model_extensions(&model_type);
     let files = file_ops::scan_directory(&model_dir, &extensions)
         .map_err(|e| e.to_string())?;
 
@@ -193,7 +182,7 @@ pub fn scan_mac_models(state: State<AppState>) -> Result<ScanResult, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
 
     for file_path in &files {
-        match import_model_file(&conn, file_path, true) {
+        match import_model_file(&conn, file_path, &model_type) {
             Ok(_) => imported_count += 1,
             Err(e) => errors.push(format!("{}: {}", file_path.display(), e)),
         }
@@ -208,7 +197,7 @@ pub fn scan_mac_models(state: State<AppState>) -> Result<ScanResult, String> {
 
 #[tauri::command]
 pub fn copy_model_to_stash(
-    filename: String,
+    model_id: i64,
     state: State<AppState>,
 ) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
@@ -219,8 +208,8 @@ pub fn copy_model_to_stash(
         .clone()
         .ok_or("STASH_DIR not configured")?;
 
-    // Get model info
-    let model = operations::get_model_by_filename(&conn, &filename)
+    // Get model info by ID
+    let model = operations::get_model_by_id(&conn, model_id)
         .map_err(|e| e.to_string())?
         .ok_or("Model not found")?;
 
@@ -234,7 +223,7 @@ pub fn copy_model_to_stash(
         return Err(format!("Source file not found: {}", source_path));
     }
 
-    // Build stash path
+    // Build stash path (flat structure - all models in stash root)
     let stash_path = stash_dir.join(&model.filename);
 
     // Check if file already exists in stash
@@ -264,11 +253,11 @@ pub fn copy_model_to_stash(
     file_ops::copy_file(&source_path_buf, &stash_path)
         .map_err(|e| format!("Failed to copy file: {}", e))?;
 
-    // Verify checksum after copy (if we have one)
-    if let Some(ref original_checksum) = model.checksum {
-        let copied_checksum = file_ops::calculate_checksum(&stash_path)
-            .map_err(|e| format!("Failed to verify copied file: {}", e))?;
+    // Verify checksum after copy
+    let copied_checksum = file_ops::calculate_checksum(&stash_path)
+        .map_err(|e| format!("Failed to verify copied file: {}", e))?;
 
+    if let Some(ref original_checksum) = model.checksum {
         if &copied_checksum != original_checksum {
             // Clean up the bad copy
             let _ = std::fs::remove_file(&stash_path);
@@ -276,24 +265,28 @@ pub fn copy_model_to_stash(
         }
     }
 
-    // Update model to mark it as in stash
-    let mut updated_model = model.clone();
-    updated_model.exists_stash = true;
-    operations::insert_or_update_model(&conn, &updated_model).map_err(|e| e.to_string())?;
+    // Record in stash_models table
+    let stash_model = StashModel {
+        id: None,
+        model_id,
+        stash_path: stash_path.to_string_lossy().to_string(),
+        last_synced: None,
+    };
 
+    operations::insert_stash_model(&conn, &stash_model).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn delete_model(
-    filename: String,
+    model_id: i64,
     delete_files: bool,
     state: State<AppState>,
 ) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
 
-    // Get model info before deleting
-    let model = operations::get_model_by_filename(&conn, &filename)
+    // Get model info before deleting (for file deletion)
+    let model = operations::get_model_by_id(&conn, model_id)
         .map_err(|e| e.to_string())?
         .ok_or("Model not found")?;
 
@@ -309,15 +302,11 @@ pub fn delete_model(
         }
 
         // Delete from stash if it exists
-        if model.exists_stash {
-            let stash_dir = state
-                .stash_dir
-                .lock()
-                .map_err(|e| e.to_string())?
-                .clone()
-                .ok_or("STASH_DIR not configured")?;
-            
-            let stash_path = stash_dir.join(&filename);
+        let stash_model = operations::get_stash_model_by_model_id(&conn, model_id)
+            .map_err(|e| e.to_string())?;
+
+        if let Some(stash) = stash_model {
+            let stash_path = PathBuf::from(&stash.stash_path);
             if stash_path.exists() {
                 std::fs::remove_file(&stash_path)
                     .map_err(|e| format!("Failed to delete stash file: {}", e))?;
@@ -325,8 +314,8 @@ pub fn delete_model(
         }
     }
 
-    // Delete from database
-    operations::delete_model(&conn, &filename).map_err(|e| e.to_string())?;
+    // Delete from database (cascades to mac_models and stash_models)
+    operations::delete_model(&conn, model_id).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -357,8 +346,8 @@ pub fn initialize_app(
 fn import_model_file(
     conn: &Connection,
     file_path: &Path,
-    from_mac_hd: bool,
-) -> Result<(), String> {
+    model_type: &str,
+) -> Result<i64, String> {
     let filename = file_path
         .file_name()
         .ok_or("Invalid filename")?
@@ -366,67 +355,30 @@ fn import_model_file(
         .to_string();
 
     // Check if already exists
-    if let Some(mut existing) = operations::get_model_by_filename(conn, &filename)
+    if let Some(existing) = operations::get_model_by_filename(conn, &filename)
         .map_err(|e| e.to_string())?
     {
-        // Update location flag
-        if from_mac_hd {
-            existing.exists_mac_hd = true;
-        } else {
-            existing.exists_stash = true;
-        }
-        operations::insert_or_update_model(conn, &existing).map_err(|e| e.to_string())?;
-        return Ok(());
+        return Ok(existing.id.unwrap());
     }
 
     // Get file metadata
     let file_size = file_ops::get_file_size(file_path)
         .map_err(|e| e.to_string())?;
-
-    // Skip checksum for speed
-    let checksum = None;
-
-    // Detect model type from filename
-    let model_type = detect_model_type(&filename);
+    let checksum = file_ops::calculate_checksum(file_path)
+        .map_err(|e| e.to_string())?;
 
     // Create model record
-    let model = CkptModel {
-        filename: filename.clone(),
+    let model = Model {
+        id: None,
+        filename,
         display_name: None,
-        model_type,
+        model_type: model_type.to_string(),
         file_size: Some(file_size as i64),
-        checksum,
+        checksum: Some(checksum),
         source_path: Some(file_path.to_string_lossy().to_string()),
-        exists_mac_hd: from_mac_hd,
-        exists_stash: !from_mac_hd,
-        mac_display_order: None,
-        lora_strength: None,
         created_at: None,
         updated_at: None,
     };
 
-    operations::insert_or_update_model(conn, &model).map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-fn detect_model_type(filename: &str) -> String {
-    let filename_lower = filename.to_lowercase();
-    
-    if filename_lower.contains("lora") || filename_lower.contains("lycoris") {
-        "lora".to_string()
-    } else if filename_lower.contains("control") || filename_lower.contains("t2i") {
-        "control".to_string()
-    } else if filename_lower.contains("clip") {
-        "clip".to_string()
-    } else if filename_lower.contains("text") || filename_lower.contains("encoder") {
-        "text".to_string()
-    } else if filename_lower.contains("vae") {
-        "vae".to_string()
-    } else if filename_lower.contains("upscale") {
-        "upscaler".to_string()
-    } else if filename_lower.contains("face") {
-        "face_restorer".to_string()
-    } else {
-        "model".to_string()
-    }
+    operations::insert_model(conn, &model).map_err(|e| e.to_string())
 }
