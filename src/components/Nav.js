@@ -34,60 +34,26 @@ export default function Nav({ activeItem = 'models', onNavigate }) {
   };
 
   return (
-    <nav className="nav">
+    <nav className="w-[90px] h-full bg-gray-100 border-r border-gray-300 flex flex-col pt-lg">
       {navItems.map(({ id, icon: Icon, label }) => (
         <div
           key={id}
-          className={`nav-item ${active === id ? 'active' : ''}`}
+          className={`
+            flex flex-col items-center px-2 py-3 cursor-pointer
+            transition-colors duration-200 text-base font-medium text-gray-800 text-center
+            hover:bg-gray-200
+            ${active === id ? 'text-brand font-bold' : ''}
+          `}
           onClick={() => handleClick(id)}
         >
-          <Icon className="nav-icon" size={24} strokeWidth={2} />
+          <Icon
+            className={`mb-1 ${active === id ? 'text-brand' : 'text-gray-800'}`}
+            size={24}
+            strokeWidth={2}
+          />
           <div>{label}</div>
         </div>
       ))}
-
-      <style jsx>{`
-        .nav {
-          width: 90px;
-          height: 100%;
-          background-color: #f5f5f5;
-          border-right: 1px solid #d0d0d0;
-          display: flex;
-          flex-direction: column;
-          padding-top: 20px;
-        }
-
-        .nav-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 12px 8px;
-          cursor: pointer;
-          transition: background-color 0.2s;
-          font-size: 13px;
-          font-weight: 450;
-          color: #333;
-          text-align: center;
-        }
-
-        .nav-item:hover {
-          background-color: #e8e8e8;
-        }
-
-        .nav-item :global(.nav-icon) {
-          margin-bottom: 4px;
-          color: #333;
-        }
-
-        .nav-item.active {
-          color: #ff5f57;
-          font-weight: 600;
-        }
-
-        .nav-item.active :global(.nav-icon) {
-          color: #ff5f57;
-        }
-      `}</style>
     </nav>
   );
 }

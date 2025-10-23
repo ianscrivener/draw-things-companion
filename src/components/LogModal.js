@@ -1,56 +1,59 @@
 'use client';
 
 import { X } from 'lucide-react';
+import theme from '@/styles/theme';
 
 export default function LogModal({ logs, onClose }) {
-  const getLogColor = (level) => {
+  const getLogColorClass = (level) => {
     switch (level) {
-      case 'error': return '#ef4444';
-      case 'warning': return '#f59e0b';
-      case 'success': return '#4ade80';
+      case 'error': return 'text-error';
+      case 'warning': return 'text-warning';
+      case 'success': return 'text-success';
       case 'info':
-      default: return '#888';
-    }
-  };
-
-  const getLogIcon = (level) => {
-    switch (level) {
-      case 'error': return '✖';
-      case 'warning': return '⚠';
-      case 'success': return '✓';
-      case 'info':
-      default: return '•';
+      default: return 'text-gray-600';
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Activity Logs</h2>
-          <button className="close-btn" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-modal"
+      onClick={onClose}
+    >
+      <div
+        className="bg-dark-800 border border-dark-200 rounded-lg w-[90%] max-w-3xl max-h-[80vh] flex flex-col shadow-elevation-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-5 border-b border-dark-200">
+          <h2 className="m-0 text-xl font-bold text-white">Activity Logs</h2>
+          <button
+            className="bg-transparent border-none text-gray-600 cursor-pointer p-1 flex items-center transition-colors hover:text-white"
+            onClick={onClose}
+          >
             <X size={20} />
           </button>
         </div>
-        
-        <div className="modal-body">
-          <div className="logs-container">
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-thin scrollbar-track-dark-800 scrollbar-thumb-dark-200 hover:scrollbar-thumb-dark-100">
+          <div className="font-mono text-xs">
             {logs.length === 0 ? (
-              <div className="no-logs">No activity yet</div>
+              <div className="text-gray-700 text-center py-10 px-5">
+                No activity yet
+              </div>
             ) : (
               logs.map((log, index) => (
-                <div key={index} className="log-entry">
-                  <span className="log-timestamp">{log.timestamp}</span>
-                  <span 
-                    className="log-icon" 
-                    style={{ color: getLogColor(log.level) }}
-                  >
-                    {getLogIcon(log.level)}
+                <div
+                  key={index}
+                  className="flex gap-3 py-0.5 border-b border-dark-300 last:border-b-0"
+                >
+                  <span className="text-gray-700 min-w-[65px] flex-shrink-0">
+                    {log.timestamp}
                   </span>
-                  <span 
-                    className="log-message"
-                    style={{ color: getLogColor(log.level) }}
-                  >
+                  <span className={`min-w-[20px] flex-shrink-0 font-bold ${getLogColorClass(log.level)}`}>
+                    {theme.getLogIcon(log.level)}
+                  </span>
+                  <span className={`flex-1 break-words ${getLogColorClass(log.level)}`}>
                     {log.message}
                   </span>
                 </div>
@@ -59,158 +62,34 @@ export default function LogModal({ logs, onClose }) {
           </div>
         </div>
 
-        <div className="modal-footer">
-          <div className="log-count">{logs.length} log entries</div>
-          <button className="btn-close" onClick={onClose}>Close</button>
+        {/* Footer */}
+        <div className="flex justify-between items-center px-6 py-4 border-t border-dark-200">
+          <div className="text-sm text-gray-700">
+            {logs.length} log entries
+          </div>
+          <button
+            className="px-5 py-2 bg-dark-200 border border-dark-100 rounded-md text-white text-md font-semibold cursor-pointer transition-all hover:bg-dark-100 hover:border-dark-50"
+            onClick={onClose}
+          >
+            Close
+          </button>
         </div>
       </div>
 
-      <style jsx>{`
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal-content {
-          background: #1e1e1e;
-          border: 1px solid #3a3a3a;
-          border-radius: 8px;
-          width: 90%;
-          max-width: 800px;
-          max-height: 80vh;
-          display: flex;
-          flex-direction: column;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px 24px;
-          border-bottom: 1px solid #3a3a3a;
-        }
-
-        .modal-header h2 {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: #fff;
-        }
-
-        .close-btn {
-          background: none;
-          border: none;
-          color: #888;
-          cursor: pointer;
-          padding: 4px;
-          display: flex;
-          align-items: center;
-          transition: color 0.2s;
-        }
-
-        .close-btn:hover {
-          color: #fff;
-        }
-
-        .modal-body {
-          flex: 1;
-          overflow-y: auto;
-          padding: 16px 24px;
-        }
-
-        .logs-container {
-          font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-          font-size: 13px;
-        }
-
-        .no-logs {
-          color: #666;
-          text-align: center;
-          padding: 40px 20px;
-        }
-
-        .log-entry {
-          display: flex;
-          gap: 12px;
-          padding: 3px 0;
-          border-bottom: 1px solid #2a2a2a;
-        }
-
-        .log-entry:last-child {
-          border-bottom: none;
-        }
-
-        .log-timestamp {
-          color: #666;
-          min-width: 65px;
-          flex-shrink: 0;
-        }
-
-        .log-icon {
-          min-width: 20px;
-          flex-shrink: 0;
-          font-weight: bold;
-        }
-
-        .log-message {
-          flex: 1;
-          word-break: break-word;
-        }
-
-        .modal-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 24px;
-          border-top: 1px solid #3a3a3a;
-        }
-
-        .log-count {
-          font-size: 12px;
-          color: #666;
-        }
-
-        .btn-close {
-          padding: 8px 20px;
-          background: #3a3a3a;
-          border: 1px solid #4a4a4a;
-          border-radius: 6px;
-          color: #fff;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-close:hover {
-          background: #4a4a4a;
-          border-color: #5a5a5a;
-        }
-
-        /* Scrollbar styling */
-        .modal-body::-webkit-scrollbar {
+      <style jsx global>{`
+        /* Scrollbar styling for webkit browsers */
+        .scrollbar-thin::-webkit-scrollbar {
           width: 8px;
         }
-
-        .modal-body::-webkit-scrollbar-track {
+        .scrollbar-track-dark-800::-webkit-scrollbar-track {
           background: #1e1e1e;
         }
-
-        .modal-body::-webkit-scrollbar-thumb {
+        .scrollbar-thumb-dark-200::-webkit-scrollbar-thumb {
           background: #3a3a3a;
           border-radius: 4px;
         }
-
-        .modal-body::-webkit-scrollbar-thumb:hover {
+        .scrollbar-thumb-dark-200::-webkit-scrollbar-thumb:hover,
+        .hover\\:scrollbar-thumb-dark-100::-webkit-scrollbar-thumb:hover {
           background: #4a4a4a;
         }
       `}</style>

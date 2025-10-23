@@ -40,36 +40,9 @@ export default function Home() {
   if (loading) {
     return (
       <>
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading DrawThings Companion...</p>
-          <style jsx>{`
-            .loading-container {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              height: 100vh;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              padding-bottom: 35px; /* Make room for log viewer */
-            }
-            .loading-spinner {
-              width: 48px;
-              height: 48px;
-              border: 4px solid rgba(255, 255, 255, 0.3);
-              border-top-color: white;
-              border-radius: 50%;
-              animation: spin 1s linear infinite;
-            }
-            @keyframes spin {
-              to { transform: rotate(360deg); }
-            }
-            p {
-              margin-top: 20px;
-              font-size: 16px;
-            }
-          `}</style>
+        <div className="flex flex-col items-center justify-center h-screen bg-gradient-brand text-white pb-log-viewer">
+          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <p className="mt-5 text-lg">Loading DrawThings Companion...</p>
         </div>
         <LogViewer />
       </>
@@ -100,44 +73,20 @@ export default function Home() {
   };
 
   return (
-    <div className="main">
+    <div className="flex flex-col h-screen w-screen">
       {/* Body (2 columns) */}
-      <div className="body">
+      <div className="flex flex-1 overflow-hidden">
         {/* Navigation */}
         <Nav activeItem={activeSection} onNavigate={handleNavigate} />
 
         {/* Inner body - render active view */}
-        <div className="inner_body">
+        <div className="flex flex-col flex-1 overflow-hidden bg-gray-50 pb-log-viewer">
           {renderView()}
         </div>
       </div>
 
       {/* Log Viewer Footer */}
       <LogViewer />
-
-      <style jsx>{`
-        .main {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          width: 100vw;
-        }
-
-        .body {
-          display: flex;
-          flex: 1;
-          overflow: hidden;
-        }
-
-        .inner_body {
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          overflow: hidden;
-          background: #fafafa;
-          padding-bottom: 35px; /* Make room for log viewer */
-        }
-      `}</style>
     </div>
   );
 }

@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useDragAndDrop } from '@formkit/drag-and-drop/react';
 import { Save, X, HardDrive, Archive } from 'lucide-react';
 
-export default function TwoPaneManager({ 
-  modelType, 
+export default function TwoPaneManager({
+  modelType,
   title,
   macModels = [],
   stashModels = [],
@@ -57,13 +57,13 @@ export default function TwoPaneManager({
   };
 
   return (
-    <div className="two-pane-container">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="header">
-        <h1 className="title">{title}</h1>
-        <div className="header-actions">
+      <div className="flex justify-between items-center px-8 py-6 border-b border-gray-250 bg-white">
+        <h1 className="m-0 text-3xl font-bold">{title}</h1>
+        <div className="flex gap-3">
           <button
-            className="btn-cancel"
+            className="flex items-center gap-2 px-5 py-2.5 border border-gray-250 rounded-md text-md font-semibold cursor-pointer transition-all bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={onCancel}
             disabled={!hasUnsavedChanges || loading}
           >
@@ -71,7 +71,7 @@ export default function TwoPaneManager({
             Cancel
           </button>
           <button
-            className="btn-save"
+            className="flex items-center gap-2 px-5 py-2.5 border-none rounded-md text-md font-semibold cursor-pointer transition-all bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onSave}
             disabled={!hasUnsavedChanges || loading}
           >
@@ -82,44 +82,48 @@ export default function TwoPaneManager({
       </div>
 
       {/* Two Panes */}
-      <div className="panes">
+      <div className="grid grid-cols-2 gap-0 flex-1 overflow-hidden">
         {/* Left Pane - Mac HD */}
-        <div className="pane pane-mac">
-          <div className="pane-header">
+        <div className="flex flex-col h-full overflow-hidden border-r-2 border-gray-250">
+          <div className="flex items-center gap-3 px-6 py-5 bg-gray-100 border-b border-gray-250">
             <HardDrive size={20} />
-            <h2>Macintosh HD</h2>
-            <span className="count">{macModels.length}</span>
+            <h2 className="m-0 text-xl font-bold flex-1">Macintosh HD</h2>
+            <span className="bg-gray-250 px-2.5 py-1 rounded-xl text-base font-semibold text-gray-700">
+              {macModels.length}
+            </span>
           </div>
-          <div className="pane-content" ref={macListRef}>
+          <div className="flex-1 overflow-y-auto p-4" ref={macListRef}>
             {macModels.length === 0 ? (
-              <div className="empty-state">
-                <p>No models on Mac HD</p>
-                <p className="hint">Drag models from Stash to add them</p>
+              <div className="text-center py-15 px-5 text-gray-500">
+                <p className="my-2">No models on Mac HD</p>
+                <p className="text-base text-gray-450 my-2">Drag models from Stash to add them</p>
               </div>
             ) : (
               macModels.map((item, index) => (
                 <div
                   key={item.model.id}
-                  className="model-item draggable"
+                  className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-250 rounded-md mb-2 cursor-grab transition-all hover:border-brand hover:shadow-elevation-sm active:cursor-grabbing"
                   onDoubleClick={() => handleModelClick(item)}
                   data-drag-disabled="false"
                 >
-                  <div className="model-order">{index + 1}</div>
-                  <div className="model-info">
-                    <div className="model-name">
+                  <div className="w-7 h-7 flex items-center justify-center bg-gray-150 rounded-sm text-base font-bold text-gray-700">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-md font-semibold mb-1 break-words">
                       {item.custom_name || item.model.display_name || item.model.filename}
                     </div>
-                    <div className="model-meta">
+                    <div className="text-sm text-gray-700 flex gap-3">
                       {formatFileSize(item.model.file_size)}
                       {item.lora_strength && (
-                        <span className="lora-strength">
+                        <span className="text-brand font-semibold">
                           Strength: {item.lora_strength}
                         </span>
                       )}
                     </div>
                   </div>
                   <button
-                    className="btn-remove"
+                    className="bg-transparent border border-gray-250 rounded-sm p-1.5 cursor-pointer transition-all text-gray-700 hover:bg-error-light hover:border-error-dark hover:text-error-dark"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveFromMac(item.model.id);
@@ -135,16 +139,18 @@ export default function TwoPaneManager({
         </div>
 
         {/* Right Pane - Stash */}
-        <div className="pane pane-stash">
-          <div className="pane-header">
+        <div className="flex flex-col h-full overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-5 bg-gray-100 border-b border-gray-250">
             <Archive size={20} />
-            <h2>Stash</h2>
-            <span className="count">{stashModels.length}</span>
+            <h2 className="m-0 text-xl font-bold flex-1">Stash</h2>
+            <span className="bg-gray-250 px-2.5 py-1 rounded-xl text-base font-semibold text-gray-700">
+              {stashModels.length}
+            </span>
           </div>
-          <div className="pane-content">
+          <div className="flex-1 overflow-y-auto p-4">
             {stashModels.length === 0 ? (
-              <div className="empty-state">
-                <p>No models in stash</p>
+              <div className="text-center py-15 px-5 text-gray-500">
+                <p className="my-2">No models in stash</p>
               </div>
             ) : (
               stashModels.map((item) => {
@@ -152,7 +158,11 @@ export default function TwoPaneManager({
                 return (
                   <div
                     key={item.model.id}
-                    className={`model-item ${onMac ? 'grayed' : ''}`}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 bg-white border border-gray-250 rounded-md mb-2 cursor-pointer transition-all
+                      hover:border-brand hover:shadow-elevation-sm
+                      ${onMac ? 'opacity-50 bg-gray-50 hover:opacity-60' : ''}
+                    `}
                     onDoubleClick={() => handleModelClick(item)}
                     onClick={() => {
                       if (!onMac) {
@@ -160,16 +170,18 @@ export default function TwoPaneManager({
                       }
                     }}
                   >
-                    <div className="model-info">
-                      <div className="model-name">
+                    <div className="flex-1">
+                      <div className="text-md font-semibold mb-1 break-words">
                         {item.model.display_name || item.model.filename}
                       </div>
-                      <div className="model-meta">
+                      <div className="text-sm text-gray-700">
                         {formatFileSize(item.model.file_size)}
                       </div>
                     </div>
                     {onMac && (
-                      <div className="on-mac-badge">On Mac</div>
+                      <div className="px-2.5 py-1 bg-info-light text-info-dark rounded-sm text-sm font-semibold">
+                        On Mac
+                      </div>
                     )}
                   </div>
                 );
@@ -181,347 +193,50 @@ export default function TwoPaneManager({
 
       {/* Model Details Modal */}
       {showModal && selectedModel && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Model Details</h3>
-              <button onClick={() => setShowModal(false)}>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-modal"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-xl w-[90%] max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="m-0 text-2xl font-bold">Model Details</h3>
+              <button
+                className="bg-transparent border-none cursor-pointer p-1 text-gray-700 hover:text-gray-800"
+                onClick={() => setShowModal(false)}
+              >
                 <X size={20} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="detail-row">
-                <span className="detail-label">Filename:</span>
-                <span className="detail-value">{selectedModel.model.filename}</span>
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-[120px_1fr] gap-4">
+                <span className="font-bold text-gray-700">Filename:</span>
+                <span className="text-gray-800 break-all">{selectedModel.model.filename}</span>
               </div>
-              <div className="detail-row">
-                <span className="detail-label">Type:</span>
-                <span className="detail-value">{selectedModel.model.model_type}</span>
+              <div className="grid grid-cols-[120px_1fr] gap-4">
+                <span className="font-bold text-gray-700">Type:</span>
+                <span className="text-gray-800 break-all">{selectedModel.model.model_type}</span>
               </div>
-              <div className="detail-row">
-                <span className="detail-label">Size:</span>
-                <span className="detail-value">{formatFileSize(selectedModel.model.file_size)}</span>
+              <div className="grid grid-cols-[120px_1fr] gap-4">
+                <span className="font-bold text-gray-700">Size:</span>
+                <span className="text-gray-800 break-all">{formatFileSize(selectedModel.model.file_size)}</span>
               </div>
               {selectedModel.model.checksum && (
-                <div className="detail-row">
-                  <span className="detail-label">Checksum:</span>
-                  <span className="detail-value checksum">{selectedModel.model.checksum}</span>
+                <div className="grid grid-cols-[120px_1fr] gap-4">
+                  <span className="font-bold text-gray-700">Checksum:</span>
+                  <span className="text-gray-800 break-all font-mono text-xs">{selectedModel.model.checksum}</span>
                 </div>
               )}
-              <div className="detail-row">
-                <span className="detail-label">On Mac HD:</span>
-                <span className="detail-value">{selectedModel.is_on_mac ? 'Yes' : 'No'}</span>
+              <div className="grid grid-cols-[120px_1fr] gap-4">
+                <span className="font-bold text-gray-700">On Mac HD:</span>
+                <span className="text-gray-800 break-all">{selectedModel.is_on_mac ? 'Yes' : 'No'}</span>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .two-pane-container {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 24px 32px;
-          border-bottom: 1px solid #e0e0e0;
-          background: white;
-        }
-
-        .title {
-          margin: 0;
-          font-size: 24px;
-          font-weight: 600;
-        }
-
-        .header-actions {
-          display: flex;
-          gap: 12px;
-        }
-
-        .btn-cancel, .btn-save {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 20px;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-cancel {
-          background: white;
-          color: #666;
-          border: 1px solid #e0e0e0;
-        }
-
-        .btn-cancel:hover:not(:disabled) {
-          background: #f5f5f5;
-        }
-
-        .btn-cancel:disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
-
-        .btn-save {
-          background: #ff5f57;
-          color: white;
-        }
-
-        .btn-save:hover:not(:disabled) {
-          background: #ff4540;
-        }
-
-        .btn-save:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .panes {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0;
-          flex: 1;
-          overflow: hidden;
-        }
-
-        .pane {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          overflow: hidden;
-        }
-
-        .pane-mac {
-          border-right: 2px solid #e0e0e0;
-        }
-
-        .pane-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 20px 24px;
-          background: #f5f5f5;
-          border-bottom: 1px solid #e0e0e0;
-        }
-
-        .pane-header h2 {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-          flex: 1;
-        }
-
-        .count {
-          background: #e0e0e0;
-          padding: 4px 10px;
-          border-radius: 12px;
-          font-size: 13px;
-          font-weight: 500;
-          color: #666;
-        }
-
-        .pane-content {
-          flex: 1;
-          overflow-y: auto;
-          padding: 16px;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 60px 20px;
-          color: #999;
-        }
-
-        .empty-state p {
-          margin: 8px 0;
-        }
-
-        .hint {
-          font-size: 13px;
-          color: #bbb;
-        }
-
-        .model-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px 16px;
-          background: white;
-          border: 1px solid #e0e0e0;
-          border-radius: 6px;
-          margin-bottom: 8px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .model-item:hover {
-          border-color: #ff5f57;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .model-item.draggable {
-          cursor: grab;
-        }
-
-        .model-item.draggable:active {
-          cursor: grabbing;
-        }
-
-        .model-item.grayed {
-          opacity: 0.5;
-          background: #f9f9f9;
-        }
-
-        .model-item.grayed:hover {
-          opacity: 0.6;
-        }
-
-        .model-order {
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #f0f0f0;
-          border-radius: 4px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #666;
-        }
-
-        .model-info {
-          flex: 1;
-        }
-
-        .model-name {
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 4px;
-          word-break: break-word;
-        }
-
-        .model-meta {
-          font-size: 12px;
-          color: #666;
-          display: flex;
-          gap: 12px;
-        }
-
-        .lora-strength {
-          color: #ff5f57;
-          font-weight: 500;
-        }
-
-        .on-mac-badge {
-          padding: 4px 10px;
-          background: #e3f2fd;
-          color: #1976d2;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        .btn-remove {
-          background: transparent;
-          border: 1px solid #e0e0e0;
-          border-radius: 4px;
-          padding: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-          color: #666;
-        }
-
-        .btn-remove:hover {
-          background: #fee;
-          border-color: #f44336;
-          color: #f44336;
-        }
-
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal-content {
-          background: white;
-          border-radius: 8px;
-          padding: 24px;
-          max-width: 600px;
-          width: 90%;
-          max-height: 80vh;
-          overflow-y: auto;
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-
-        .modal-header h3 {
-          margin: 0;
-          font-size: 20px;
-          font-weight: 600;
-        }
-
-        .modal-header button {
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 4px;
-          color: #666;
-        }
-
-        .modal-header button:hover {
-          color: #333;
-        }
-
-        .modal-body {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .detail-row {
-          display: grid;
-          grid-template-columns: 120px 1fr;
-          gap: 16px;
-        }
-
-        .detail-label {
-          font-weight: 600;
-          color: #666;
-        }
-
-        .detail-value {
-          color: #333;
-          word-break: break-all;
-        }
-
-        .detail-value.checksum {
-          font-family: 'Monaco', 'Courier New', monospace;
-          font-size: 11px;
-        }
-      `}</style>
     </div>
   );
 }
