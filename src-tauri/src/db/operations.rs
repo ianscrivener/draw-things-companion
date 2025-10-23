@@ -136,6 +136,7 @@ pub fn delete_model(conn: &Connection, filename: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn update_model_display_name(conn: &Connection, filename: &str, display_name: &str) -> Result<()> {
     conn.execute(
         "UPDATE ckpt_models 
@@ -146,6 +147,7 @@ pub fn update_model_display_name(conn: &Connection, filename: &str, display_name
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn update_lora_strength(conn: &Connection, filename: &str, strength: i32) -> Result<()> {
     conn.execute(
         "UPDATE ckpt_models 
@@ -178,6 +180,7 @@ pub fn set_config(conn: &Connection, key: &str, value: &str) -> Result<()> {
 }
 
 // Relationship operations
+#[allow(dead_code)]
 pub fn add_relationship(conn: &Connection, parent: &str, child: &str) -> Result<()> {
     conn.execute(
         "INSERT OR IGNORE INTO ckpt_x_ckpt (parent_ckpt_filename, child_ckpt_filename)
@@ -187,6 +190,7 @@ pub fn add_relationship(conn: &Connection, parent: &str, child: &str) -> Result<
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn get_relationships(conn: &Connection, parent_filename: &str) -> Result<Vec<CkptRelationship>> {
     let mut stmt = conn.prepare(
         "SELECT id, parent_ckpt_filename, child_ckpt_filename, created_at
@@ -207,6 +211,7 @@ pub fn get_relationships(conn: &Connection, parent_filename: &str) -> Result<Vec
     Ok(relationships)
 }
 
+#[allow(dead_code)]
 pub fn delete_relationship(conn: &Connection, parent: &str, child: &str) -> Result<()> {
     conn.execute(
         "DELETE FROM ckpt_x_ckpt 

@@ -151,6 +151,7 @@ pub fn update_models_order(
     operations::update_display_orders(&conn, &updates).map_err(|e| e.to_string())
 }
 
+#[allow(dead_code)]
 #[tauri::command]
 pub fn update_model_name(
     filename: String,
@@ -162,6 +163,7 @@ pub fn update_model_name(
         .map_err(|e| e.to_string())
 }
 
+#[allow(dead_code)]
 #[tauri::command]
 pub fn update_model_lora_strength(
     filename: String,

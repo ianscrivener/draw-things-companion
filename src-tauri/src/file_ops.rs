@@ -97,7 +97,8 @@ pub fn file_exists<P: AsRef<Path>>(path: P) -> bool {
     path.as_ref().exists()
 }
 
-/// Get model file extensions based on type
+/// Get file extensions for a model type
+#[allow(dead_code)]
 pub fn get_model_extensions(model_type: &str) -> Vec<&'static str> {
     match model_type {
         "model" => vec!["ckpt", "safetensors", "pt", "pth"],
