@@ -1,5 +1,6 @@
 use crate::db::{models::*, operations};
 use crate::file_ops;
+use crate::logger::{LogEvent, LogStore};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -38,6 +39,37 @@ pub fn get_config_value(key: String, state: State<AppState>) -> Result<Option<St
 pub fn set_config_value(key: String, value: String, state: State<AppState>) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
     operations::set_config(&conn, &key, &value).map_err(|e| e.to_string())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InitializationStatus {
+    pub status: String, // "not_started", "in_progress", "complete", "error"
+    pub stash_exists: bool,
+}
+
+#[tauri::command]
+pub fn get_initialization_status(state: State<AppState>) -> Result<InitializationStatus, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    
+    let status = operations::get_config(&conn, "INIT_STATUS")
+        .map_err(|e| e.to_string())?
+        .unwrap_or_else(|| "not_started".to_string());
+    
+    let stash_exists = operations::get_config(&conn, "STASH_EXISTS")
+        .map_err(|e| e.to_string())?
+        .map(|v| v == "true")
+        .unwrap_or(false);
+    
+    Ok(InitializationStatus {
+        status,
+        stash_exists,
+    })
+}
+
+#[tauri::command]
+pub fn get_all_logs(log_store: State<LogStore>) -> Result<Vec<LogEvent>, String> {
+    let logs = log_store.logs.lock().map_err(|e| e.to_string())?;
+    Ok(logs.clone())
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -2,8 +2,11 @@ mod db;
 mod file_ops;
 mod commands;
 mod env_config;
+mod first_run;
+mod logger;
 
 use commands::AppState;
+use logger::LogStore;
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::Manager;
@@ -64,10 +67,31 @@ pub fn run() {
                     &stash_dir_path.to_string_lossy()
                 );
                 
-                // Ensure directories exist
-                if stash_dir_path.exists() || std::fs::create_dir_all(&stash_dir_path).is_ok() {
-                    let _ = db::operations::set_config(&conn, "STASH_EXISTS", "true");
-                }
+                // Run first-run initialization in background thread
+                let db_path_clone = db_path.clone();
+                let dt_dir_clone = dt_dir.clone();
+                let stash_dir_clone = stash_dir_path.clone();
+                let app_handle = app.handle().clone();
+                
+                std::thread::spawn(move || {
+                    logger::log_info(&app_handle, "Starting background initialization...".to_string());
+                    
+                    // Open a new database connection for this thread
+                    match Connection::open(&db_path_clone) {
+                        Ok(thread_conn) => {
+                            match first_run::initialize_stash(&app_handle, &thread_conn, &dt_dir_clone, &stash_dir_clone) {
+                                Ok(_) => logger::log_success(&app_handle, "✓ Background initialization complete".to_string()),
+                                Err(e) => {
+                                    logger::log_error(&app_handle, format!("Background initialization error: {}", e));
+                                    // Mark as error in database
+                                    let _ = db::operations::set_config(&thread_conn, "INIT_STATUS", "error");
+                                    let _ = db::operations::set_config(&thread_conn, "INIT_ERROR", &e);
+                                }
+                            }
+                        }
+                        Err(e) => logger::log_error(&app_handle, format!("Failed to open database in background thread: {}", e)),
+                    }
+                });
             }
 
             // Create app state with loaded directories
@@ -78,6 +102,9 @@ pub fn run() {
             };
 
             app.manage(state);
+            
+            // Create and manage log store
+            app.manage(LogStore::new());
 
             Ok(())
         })
@@ -85,6 +112,7 @@ pub fn run() {
             greet,
             commands::get_config_value,
             commands::set_config_value,
+            commands::get_initialization_status,
             commands::get_app_paths,
             commands::update_stash_dir,
             commands::get_models,
@@ -94,6 +122,7 @@ pub fn run() {
             commands::scan_mac_models,
             commands::copy_model_to_stash,
             commands::initialize_app,
+            commands::get_all_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

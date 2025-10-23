@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Nav from '@/components/Nav';
 import SetupWizard from '@/components/SetupWizard';
+import LogViewer from '@/components/LogViewer';
 import StashesView from '@/components/views/StashesView';
 import ModelsView from '@/components/views/ModelsView';
 import LoRAsView from '@/components/views/LoRAsView';
@@ -27,42 +28,51 @@ export default function Home() {
 
   // Show setup wizard if not initialized
   if (needsSetup && !initialized) {
-    return <SetupWizard onComplete={handleSetupComplete} />;
+    return (
+      <>
+        <SetupWizard onComplete={handleSetupComplete} />
+        <LogViewer />
+      </>
+    );
   }
 
   // Show loading state
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading DrawThings Companion...</p>
-        <style jsx>{`
-          .loading-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-          }
-          .loading-spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-          p {
-            margin-top: 20px;
-            font-size: 16px;
-          }
-        `}</style>
-      </div>
+      <>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading DrawThings Companion...</p>
+          <style jsx>{`
+            .loading-container {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding-bottom: 35px; /* Make room for log viewer */
+            }
+            .loading-spinner {
+              width: 48px;
+              height: 48px;
+              border: 4px solid rgba(255, 255, 255, 0.3);
+              border-top-color: white;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+            p {
+              margin-top: 20px;
+              font-size: 16px;
+            }
+          `}</style>
+        </div>
+        <LogViewer />
+      </>
     );
   }
 
@@ -102,8 +112,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Footer - 25px height */}
-      <div className="footer">Ready</div>
+      {/* Log Viewer Footer */}
+      <LogViewer />
 
       <style jsx>{`
         .main {
@@ -125,18 +135,7 @@ export default function Home() {
           flex: 1;
           overflow: hidden;
           background: #fafafa;
-        }
-
-        .footer {
-          width: 100%;
-          height: 25px;
-          background: linear-gradient(180deg, #5a5a5a 0%, #3a3a3a 100%);
-          border-top: 1px solid #2a2a2a;
-          display: flex;
-          align-items: center;
-          padding: 0 12px;
-          font-size: 11px;
-          color: #ccc;
+          padding-bottom: 35px; /* Make room for log viewer */
         }
       `}</style>
     </div>
