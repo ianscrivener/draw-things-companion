@@ -15,6 +15,7 @@ export default function LogViewer() {
   useEffect(() => {
     console.log('LogViewer mounted');
     let unlistenFn;
+    let historicalLogCount = 0;
 
     // Fetch historical logs and set up listener
     const initialize = async () => {
@@ -25,12 +26,28 @@ export default function LogViewer() {
           const historicalLogs = await invoke('get_all_logs');
           console.log('Fetched historical logs:', historicalLogs.length);
           setLogs(historicalLogs);
+          historicalLogCount = historicalLogs.length;
 
-          // Then set up listener for new logs
+          // Then set up listener for new logs only
           unlistenFn = await listen('log-event', (event) => {
             const logEntry = event.payload;
             console.log('Received new log event:', logEntry);
-            setLogs(prev => [...prev, logEntry]);
+            
+            // Only add if it's truly a new log (after our historical fetch)
+            setLogs(prev => {
+              // Check if this log already exists (by timestamp and message)
+              const exists = prev.some(log => 
+                log.timestamp === logEntry.timestamp && 
+                log.message === logEntry.message
+              );
+              
+              if (exists) {
+                console.log('Duplicate log, skipping:', logEntry.message);
+                return prev;
+              }
+              
+              return [...prev, logEntry];
+            });
             
             // Trigger activity
             setIsActive(true);

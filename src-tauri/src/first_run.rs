@@ -47,18 +47,15 @@ pub fn initialize_stash(
     
     if is_first_run {
         logger::log_info(app, "First run detected - initializing stash from DrawThings directory...".to_string());
-        
-        // 2. Transfer all model files (.ckpt) to stash if empty
-        transfer_model_files(app, dt_base_dir, stash_dir)?;
-        
-        // 3. Copy all JSON config files to stash
-        copy_json_files(app, dt_base_dir, stash_dir)?;
     } else {
-        logger::log_info(app, "Stash directory already contains files - skipping initial transfer".to_string());
-        
-        // Still copy any missing JSON files
-        copy_json_files(app, dt_base_dir, stash_dir)?;
+        logger::log_info(app, "Syncing models with DrawThings directory...".to_string());
     }
+    
+    // Copy/update all JSON config files first
+    copy_json_files(app, dt_base_dir, stash_dir)?;
+    
+    // Then sync model files to ensure stash is up-to-date
+    transfer_model_files(app, dt_base_dir, stash_dir)?;
 
     // Set STASH_EXISTS=true in config
     operations::set_config(conn, "STASH_EXISTS", "true")
@@ -106,12 +103,13 @@ fn transfer_model_files(app: &AppHandle, dt_base_dir: &Path, stash_dir: &Path) -
         return Err(msg);
     }
 
-    logger::log_info(app, format!("Transferring model files from {}", dt_models_dir.display()));
+    logger::log_info(app, format!("Syncing model files from {}", dt_models_dir.display()));
 
     let entries = fs::read_dir(&dt_models_dir)
         .map_err(|e| format!("Failed to read DrawThings Models directory: {}", e))?;
     
     let mut copied_count = 0;
+    let mut skipped_count = 0;
     let mut error_count = 0;
 
     for entry in entries {
@@ -123,26 +121,47 @@ fn transfer_model_files(app: &AppHandle, dt_base_dir: &Path, stash_dir: &Path) -
             if let Some(filename) = path.file_name() {
                 let dest_path = stash_models_dir.join(filename);
                 
-                match fs::copy(&path, &dest_path) {
-                    Ok(_) => {
-                        copied_count += 1;
-                        logger::log_info(app, format!("  Copied: {}", filename.to_string_lossy()));
+                // Only copy if it doesn't exist or source is newer
+                let should_copy = if dest_path.exists() {
+                    match (fs::metadata(&path), fs::metadata(&dest_path)) {
+                        (Ok(src_meta), Ok(dest_meta)) => {
+                            // Copy if source is newer or different size
+                            let size_different = src_meta.len() != dest_meta.len();
+                            let src_newer = src_meta.modified().ok() > dest_meta.modified().ok();
+                            size_different || src_newer
+                        }
+                        _ => true, // Copy if we can't get metadata
                     }
-                    Err(e) => {
-                        error_count += 1;
-                        logger::log_error(app, format!("  Error copying {}: {}", filename.to_string_lossy(), e));
+                } else {
+                    true // Copy if doesn't exist
+                };
+                
+                if should_copy {
+                    match fs::copy(&path, &dest_path) {
+                        Ok(bytes) => {
+                            copied_count += 1;
+                            let mb = bytes as f64 / (1024.0 * 1024.0);
+                            logger::log_info(app, format!("  Copied: {} ({:.1} MB)", filename.to_string_lossy(), mb));
+                        }
+                        Err(e) => {
+                            error_count += 1;
+                            logger::log_error(app, format!("  Error copying {}: {}", filename.to_string_lossy(), e));
+                        }
                     }
+                } else {
+                    skipped_count += 1;
                 }
             }
         }
     }
     
     if copied_count > 0 {
-        logger::log_success(app, format!("✓ Transferred {} model files ({} errors)", copied_count, error_count));
-    }
-    
-    if copied_count == 0 && error_count == 0 {
-        logger::log_info(app, "  No .ckpt files found in DrawThings Models directory".to_string());
+        logger::log_success(app, format!("✓ Copied {} model files ({} already up-to-date, {} errors)", 
+            copied_count, skipped_count, error_count));
+    } else if skipped_count > 0 {
+        logger::log_info(app, format!("✓ All {} model files are up-to-date", skipped_count));
+    } else {
+        logger::log_warning(app, "⚠ No .ckpt files found in DrawThings Models directory".to_string());
     }
     
     Ok(())

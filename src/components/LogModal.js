@@ -141,7 +141,7 @@ export default function LogModal({ logs, onClose }) {
         .log-entry {
           display: flex;
           gap: 12px;
-          padding: 6px 0;
+          padding: 3px 0;
           border-bottom: 1px solid #2a2a2a;
         }
 
