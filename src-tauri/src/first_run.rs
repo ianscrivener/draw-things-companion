@@ -57,6 +57,9 @@ pub fn initialize_stash(
     // Then sync model files to ensure stash is up-to-date
     transfer_model_files(app, dt_base_dir, stash_dir)?;
 
+    // Scan and import models into database
+    scan_and_import_models(app, conn, dt_base_dir, stash_dir)?;
+
     // Set STASH_EXISTS=true in config
     operations::set_config(conn, "STASH_EXISTS", "true")
         .map_err(|e| format!("Failed to set STASH_EXISTS config: {}", e))?;
@@ -165,6 +168,161 @@ fn transfer_model_files(app: &AppHandle, dt_base_dir: &Path, stash_dir: &Path) -
     }
     
     Ok(())
+}
+
+/// Scan and import all models from both Mac HD and Stash into database
+fn scan_and_import_models(app: &AppHandle, conn: &Connection, dt_base_dir: &Path, stash_dir: &Path) -> Result<(), String> {
+    logger::log_info(app, "Scanning models from Mac HD and Stash...".to_string());
+    
+    let dt_models_dir = dt_base_dir.join("Models");
+    let stash_models_dir = stash_dir.join("Models");
+    
+    let mut total_imported = 0;
+    let mut total_errors = 0;
+    
+    // Scan Mac HD models
+    if dt_models_dir.exists() {
+        logger::log_info(app, format!("Scanning Mac HD: {}", dt_models_dir.display()));
+        match scan_directory_and_import(app, conn, &dt_models_dir, "Mac HD") {
+            Ok((imported, errors)) => {
+                total_imported += imported;
+                total_errors += errors;
+            }
+            Err(e) => {
+                logger::log_error(app, format!("Error scanning Mac HD: {}", e));
+            }
+        }
+    } else {
+        logger::log_warning(app, format!("Mac HD Models directory not found: {}", dt_models_dir.display()));
+    }
+    
+    // Scan Stash models
+    if stash_models_dir.exists() {
+        logger::log_info(app, format!("Scanning Stash: {}", stash_models_dir.display()));
+        match scan_directory_and_import(app, conn, &stash_models_dir, "Stash") {
+            Ok((imported, errors)) => {
+                total_imported += imported;
+                total_errors += errors;
+            }
+            Err(e) => {
+                logger::log_error(app, format!("Error scanning Stash: {}", e));
+            }
+        }
+    } else {
+        logger::log_warning(app, format!("Stash Models directory not found: {}", stash_models_dir.display()));
+    }
+    
+    if total_imported > 0 {
+        logger::log_success(app, format!("✓ Imported {} models into database ({} errors)", total_imported, total_errors));
+    } else {
+        logger::log_warning(app, "⚠ No models found to import".to_string());
+    }
+    
+    Ok(())
+}
+
+/// Scan a directory and import all model files into the database
+fn scan_directory_and_import(
+    app: &AppHandle,
+    conn: &Connection,
+    directory: &Path,
+    location_name: &str,
+) -> Result<(usize, usize), String> {
+    let entries = fs::read_dir(directory)
+        .map_err(|e| format!("Failed to read {}: {}", location_name, e))?;
+    
+    let mut imported_count = 0;
+    let mut error_count = 0;
+    
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
+        let path = entry.path();
+        
+        // Only import .ckpt files
+        if let Some(ext) = path.extension() {
+            if ext == "ckpt" {
+                match import_model_file(conn, &path) {
+                    Ok(_) => {
+                        imported_count += 1;
+                        if imported_count % 10 == 0 {
+                            logger::log_info(app, format!("  Imported {} models from {}...", imported_count, location_name));
+                        }
+                    }
+                    Err(e) => {
+                        error_count += 1;
+                        logger::log_warning(app, format!("  Skipped {}: {}", path.file_name().unwrap().to_string_lossy(), e));
+                    }
+                }
+            }
+        }
+    }
+    
+    Ok((imported_count, error_count))
+}
+
+/// Import a single model file into the database
+fn import_model_file(conn: &Connection, file_path: &Path) -> Result<i64, String> {
+    let filename = file_path
+        .file_name()
+        .ok_or("Invalid filename")?
+        .to_string_lossy()
+        .to_string();
+    
+    // Check if already exists
+    if let Some(existing) = operations::get_model_by_filename(conn, &filename)
+        .map_err(|e| e.to_string())?
+    {
+        // Model already in database, skip
+        return Ok(existing.id.unwrap());
+    }
+    
+    // Get file metadata
+    let file_size = file_ops::get_file_size(file_path)
+        .map_err(|e| format!("Failed to get file size: {}", e))?;
+    
+    // Skip checksum calculation for speed (can be calculated later if needed)
+    
+    // Determine model type from filename patterns
+    let model_type = determine_model_type(&filename);
+    
+    // Create model record
+    let model = crate::db::models::Model {
+        id: None,
+        filename: filename.clone(),
+        display_name: None,
+        model_type,
+        file_size: Some(file_size as i64),
+        checksum: None, // Skip checksum for faster scanning
+        source_path: Some(file_path.to_string_lossy().to_string()),
+        created_at: None,
+        updated_at: None,
+    };
+    
+    operations::insert_model(conn, &model)
+        .map_err(|e| format!("Failed to insert model: {}", e))
+}
+
+/// Determine model type from filename patterns
+fn determine_model_type(filename: &str) -> String {
+    let lower = filename.to_lowercase();
+    
+    // Check for LoRA keywords
+    if lower.contains("lora") || lower.contains("lycoris") {
+        return "lora".to_string();
+    }
+    
+    // Check for ControlNet keywords
+    if lower.contains("controlnet") || lower.contains("control_net") || lower.contains("cn_") {
+        return "controlnet".to_string();
+    }
+    
+    // Check for VAE and CLIP (utility models)
+    if lower.contains("vae") || lower.contains("clip") {
+        return "model".to_string(); // Keep as main model type for now
+    }
+    
+    // Default to main model
+    "model".to_string()
 }
 
 /// Copy all JSON config files from DT_BASE_DIR/Models to STASH_DIR/Models

@@ -41,7 +41,6 @@ pub struct Config {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelWithMacInfo {
-    #[serde(flatten)]
     pub model: Model,
     pub display_order: Option<i32>,
     pub is_on_mac: bool,
