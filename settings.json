@@ -1,0 +1,10 @@
+{
+    "model_types": {
+        "face_restorer": ["GFPGAN", "CodeFormer"],
+        "upscaler": ["ESRGAN", "RealESRGAN", "Lanczos"],
+        "depth": ["MiDaS", "DPT_Large", "DPT_Hybrid"],
+        "pose": ["OpenPose", "Mediapipe"],
+        "segmentation": ["U2Net", "MODNet"],
+        "canny": ["Edge", "Canny"]  
+    }
+}
