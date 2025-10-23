@@ -85,8 +85,32 @@ pub fn migrate_database(conn: &Connection) -> Result<()> {
         )?;
     }
 
-    // Future migrations can be added here
-    // if version < 2 { ... }
+    // Migration v2: Add source_path to models table
+    if version < 2 {
+        // Check if column already exists
+        let column_exists: bool = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('models') WHERE name='source_path'",
+                [],
+                |row| {
+                    let count: i32 = row.get(0)?;
+                    Ok(count > 0)
+                },
+            )
+            .unwrap_or(false);
+
+        if !column_exists {
+            conn.execute(
+                "ALTER TABLE models ADD COLUMN source_path TEXT",
+                [],
+            )?;
+        }
+
+        conn.execute(
+            "INSERT OR REPLACE INTO config (key, value) VALUES ('schema_version', '2')",
+            [],
+        )?;
+    }
 
     Ok(())
 }

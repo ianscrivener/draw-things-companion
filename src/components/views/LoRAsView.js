@@ -8,6 +8,7 @@ export default function LoRAsView() {
     macModels,
     stashModels,
     loading,
+    saving,
     error,
     hasUnsavedChanges,
     addToMac,
@@ -39,6 +40,7 @@ export default function LoRAsView() {
       onCancel={cancelChanges}
       hasUnsavedChanges={hasUnsavedChanges}
       loading={loading}
+      saving={saving}
     />
   );
 }

@@ -4,14 +4,15 @@ use rusqlite::{params, Connection, Result};
 // Model operations
 pub fn insert_model(conn: &Connection, model: &Model) -> Result<i64> {
     conn.execute(
-        "INSERT INTO models (filename, display_name, model_type, file_size, checksum)
-         VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT INTO models (filename, display_name, model_type, file_size, checksum, source_path)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![
             model.filename,
             model.display_name,
             model.model_type,
             model.file_size,
             model.checksum,
+            model.source_path,
         ],
     )?;
     Ok(conn.last_insert_rowid())
@@ -19,7 +20,7 @@ pub fn insert_model(conn: &Connection, model: &Model) -> Result<i64> {
 
 pub fn get_model_by_filename(conn: &Connection, filename: &str) -> Result<Option<Model>> {
     let mut stmt = conn.prepare(
-        "SELECT id, filename, display_name, model_type, file_size, checksum, created_at, updated_at
+        "SELECT id, filename, display_name, model_type, file_size, checksum, source_path, created_at, updated_at
          FROM models WHERE filename = ?1",
     )?;
 
@@ -31,8 +32,36 @@ pub fn get_model_by_filename(conn: &Connection, filename: &str) -> Result<Option
             model_type: row.get(3)?,
             file_size: row.get(4)?,
             checksum: row.get(5)?,
-            created_at: row.get(6)?,
-            updated_at: row.get(7)?,
+            source_path: row.get(6)?,
+            created_at: row.get(7)?,
+            updated_at: row.get(8)?,
+        })
+    });
+
+    match model {
+        Ok(m) => Ok(Some(m)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
+pub fn get_model_by_id(conn: &Connection, id: i64) -> Result<Option<Model>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, filename, display_name, model_type, file_size, checksum, source_path, created_at, updated_at
+         FROM models WHERE id = ?1",
+    )?;
+
+    let model = stmt.query_row(params![id], |row| {
+        Ok(Model {
+            id: Some(row.get(0)?),
+            filename: row.get(1)?,
+            display_name: row.get(2)?,
+            model_type: row.get(3)?,
+            file_size: row.get(4)?,
+            checksum: row.get(5)?,
+            source_path: row.get(6)?,
+            created_at: row.get(7)?,
+            updated_at: row.get(8)?,
         })
     });
 
@@ -45,7 +74,7 @@ pub fn get_model_by_filename(conn: &Connection, filename: &str) -> Result<Option
 
 pub fn get_models_by_type(conn: &Connection, model_type: &str) -> Result<Vec<ModelWithMacInfo>> {
     let mut stmt = conn.prepare(
-        "SELECT m.id, m.filename, m.display_name, m.model_type, m.file_size, m.checksum, 
+        "SELECT m.id, m.filename, m.display_name, m.model_type, m.file_size, m.checksum, m.source_path,
                 m.created_at, m.updated_at, mm.display_order, mm.is_visible, mm.custom_name, mm.lora_strength
          FROM models m
          LEFT JOIN mac_models mm ON m.id = mm.model_id
@@ -63,13 +92,14 @@ pub fn get_models_by_type(conn: &Connection, model_type: &str) -> Result<Vec<Mod
                     model_type: row.get(3)?,
                     file_size: row.get(4)?,
                     checksum: row.get(5)?,
-                    created_at: row.get(6)?,
-                    updated_at: row.get(7)?,
+                    source_path: row.get(6)?,
+                    created_at: row.get(7)?,
+                    updated_at: row.get(8)?,
                 },
-                display_order: row.get(8)?,
-                is_on_mac: row.get::<_, Option<i32>>(9)?.is_some(),
-                custom_name: row.get(10)?,
-                lora_strength: row.get(11)?,
+                display_order: row.get(9)?,
+                is_on_mac: row.get::<_, Option<i32>>(10)?.is_some(),
+                custom_name: row.get(11)?,
+                lora_strength: row.get(12)?,
             })
         })?
         .collect::<Result<Vec<_>>>()?;

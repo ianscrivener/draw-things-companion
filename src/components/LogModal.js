@@ -42,9 +42,9 @@ export default function LogModal({ logs, onClose }) {
                 No activity yet
               </div>
             ) : (
-              logs.map((log, index) => (
+              logs.map((log) => (
                 <div
-                  key={index}
+                  key={log.id}
                   className="flex gap-3 py-0.5 border-b border-dark-300 last:border-b-0"
                 >
                   <span className="text-gray-700 min-w-[65px] flex-shrink-0">

@@ -8,6 +8,7 @@ pub struct Model {
     pub model_type: String,
     pub file_size: Option<i64>,
     pub checksum: Option<String>,
+    pub source_path: Option<String>,  // Full path to the file on Mac HD
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 }

@@ -8,6 +8,7 @@ export default function ModelsView() {
     macModels,
     stashModels,
     loading,
+    saving,
     error,
     hasUnsavedChanges,
     addToMac,
@@ -39,6 +40,7 @@ export default function ModelsView() {
       onCancel={cancelChanges}
       hasUnsavedChanges={hasUnsavedChanges}
       loading={loading}
+      saving={saving}
     />
   );
 }

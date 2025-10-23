@@ -208,17 +208,45 @@ pub fn copy_model_to_stash(
         .clone()
         .ok_or("STASH_DIR not configured")?;
 
-    // Get model info
-    let model = operations::get_model_by_filename(&conn, "")
+    // Get model info by ID
+    let model = operations::get_model_by_id(&conn, model_id)
         .map_err(|e| e.to_string())?
         .ok_or("Model not found")?;
+
+    // Verify source_path exists
+    let source_path = model.source_path
+        .as_ref()
+        .ok_or("Model has no source path stored")?;
+
+    let source_path_buf = PathBuf::from(source_path);
+    if !source_path_buf.exists() {
+        return Err(format!("Source file not found: {}", source_path));
+    }
 
     // Build stash path (flat structure - all models in stash root)
     let stash_path = stash_dir.join(&model.filename);
 
-    // Copy file (implementation would need source path from config)
-    // This is a placeholder - actual implementation would track source paths
-    
+    // Check if file already exists in stash
+    if stash_path.exists() {
+        return Err(format!("File already exists in stash: {}", model.filename));
+    }
+
+    // Copy the file
+    file_ops::copy_file(&source_path_buf, &stash_path)
+        .map_err(|e| format!("Failed to copy file: {}", e))?;
+
+    // Verify checksum after copy
+    let copied_checksum = file_ops::calculate_checksum(&stash_path)
+        .map_err(|e| format!("Failed to verify copied file: {}", e))?;
+
+    if let Some(ref original_checksum) = model.checksum {
+        if &copied_checksum != original_checksum {
+            // Clean up the bad copy
+            let _ = std::fs::remove_file(&stash_path);
+            return Err("Checksum verification failed - copy corrupted".to_string());
+        }
+    }
+
     // Record in stash_models table
     let stash_model = StashModel {
         id: None,
@@ -226,7 +254,7 @@ pub fn copy_model_to_stash(
         stash_path: stash_path.to_string_lossy().to_string(),
         last_synced: None,
     };
-    
+
     operations::insert_stash_model(&conn, &stash_model).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -286,6 +314,7 @@ fn import_model_file(
         model_type: model_type.to_string(),
         file_size: Some(file_size as i64),
         checksum: Some(checksum),
+        source_path: Some(file_path.to_string_lossy().to_string()),
         created_at: None,
         updated_at: None,
     };

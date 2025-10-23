@@ -12,6 +12,7 @@ export function useModels(modelType) {
   const [macModels, setMacModels] = useState([]);
   const [stashModels, setStashModels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [pendingChanges, setPendingChanges] = useState([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -102,12 +103,21 @@ export function useModels(modelType) {
 
   // Save all pending changes
   const saveChanges = useCallback(async () => {
+    // Prevent concurrent saves
+    if (saving) {
+      return { success: false, error: 'Save already in progress' };
+    }
+
+    // Capture snapshots to prevent race conditions
+    const changesToSave = [...pendingChanges];
+    const macModelsSnapshot = [...macModels];
+
     try {
-      setLoading(true);
+      setSaving(true);
       setError(null);
 
-      // Process all pending changes
-      for (const change of pendingChanges) {
+      // Process all pending changes from snapshot
+      for (const change of changesToSave) {
         if (change.action === 'add') {
           await invoke('add_model_to_mac', {
             modelId: change.modelId,
@@ -120,27 +130,27 @@ export function useModels(modelType) {
         }
       }
 
-      // Update order for all mac models
-      const orderUpdates = macModels.map(m => [m.model.id, m.display_order]);
+      // Update order for all mac models from snapshot
+      const orderUpdates = macModelsSnapshot.map(m => [m.model.id, m.display_order]);
       if (orderUpdates.length > 0) {
         await invoke('update_models_order', { updates: orderUpdates });
       }
 
       // Reload to get fresh data
       await loadModels();
-      
+
       setPendingChanges([]);
       setHasUnsavedChanges(false);
-      
+
       return { success: true };
     } catch (err) {
       setError(err.message || 'Failed to save changes');
       console.error('Error saving changes:', err);
       return { success: false, error: err.message };
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  }, [pendingChanges, macModels, loadModels]);
+  }, [saving, pendingChanges, macModels, loadModels]);
 
   // Cancel pending changes
   const cancelChanges = useCallback(() => {
@@ -154,6 +164,7 @@ export function useModels(modelType) {
     macModels,
     stashModels,
     loading,
+    saving,
     error,
     hasUnsavedChanges,
     addToMac,

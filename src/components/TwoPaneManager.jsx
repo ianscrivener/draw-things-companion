@@ -16,6 +16,7 @@ export default function TwoPaneManager({
   onCancel,
   hasUnsavedChanges = false,
   loading = false,
+  saving = false,
 }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedModel, setSelectedModel] = useState(null);
@@ -65,7 +66,7 @@ export default function TwoPaneManager({
           <button
             className="flex items-center gap-2 px-5 py-2.5 border border-gray-250 rounded-md text-md font-semibold cursor-pointer transition-all bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={onCancel}
-            disabled={!hasUnsavedChanges || loading}
+            disabled={!hasUnsavedChanges || loading || saving}
           >
             <X size={18} />
             Cancel
@@ -73,10 +74,10 @@ export default function TwoPaneManager({
           <button
             className="flex items-center gap-2 px-5 py-2.5 border-none rounded-md text-md font-semibold cursor-pointer transition-all bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onSave}
-            disabled={!hasUnsavedChanges || loading}
+            disabled={!hasUnsavedChanges || loading || saving}
           >
             <Save size={18} />
-            {loading ? 'Saving...' : 'Save Changes'}
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -102,9 +103,9 @@ export default function TwoPaneManager({
               macModels.map((item, index) => (
                 <div
                   key={item.model.id}
-                  className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-250 rounded-md mb-2 cursor-grab transition-all hover:border-brand hover:shadow-elevation-sm active:cursor-grabbing"
+                  className={`flex items-center gap-3 px-4 py-3 bg-white border border-gray-250 rounded-md mb-2 transition-all hover:border-brand hover:shadow-elevation-sm ${saving ? 'cursor-not-allowed opacity-60' : 'cursor-grab active:cursor-grabbing'}`}
                   onDoubleClick={() => handleModelClick(item)}
-                  data-drag-disabled="false"
+                  data-drag-disabled={saving}
                 >
                   <div className="w-7 h-7 flex items-center justify-center bg-gray-150 rounded-sm text-base font-bold text-gray-700">
                     {index + 1}
@@ -123,11 +124,12 @@ export default function TwoPaneManager({
                     </div>
                   </div>
                   <button
-                    className="bg-transparent border border-gray-250 rounded-sm p-1.5 cursor-pointer transition-all text-gray-700 hover:bg-error-light hover:border-error-dark hover:text-error-dark"
+                    className="bg-transparent border border-gray-250 rounded-sm p-1.5 cursor-pointer transition-all text-gray-700 hover:bg-error-light hover:border-error-dark hover:text-error-dark disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-250 disabled:hover:text-gray-700"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveFromMac(item.model.id);
                     }}
+                    disabled={saving}
                     title="Remove from Mac"
                   >
                     <X size={16} />
@@ -159,13 +161,14 @@ export default function TwoPaneManager({
                   <div
                     key={item.model.id}
                     className={`
-                      flex items-center gap-3 px-4 py-3 bg-white border border-gray-250 rounded-md mb-2 cursor-pointer transition-all
+                      flex items-center gap-3 px-4 py-3 bg-white border border-gray-250 rounded-md mb-2 transition-all
                       hover:border-brand hover:shadow-elevation-sm
                       ${onMac ? 'opacity-50 bg-gray-50 hover:opacity-60' : ''}
+                      ${saving ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
                     `}
                     onDoubleClick={() => handleModelClick(item)}
                     onClick={() => {
-                      if (!onMac) {
+                      if (!onMac && !saving) {
                         onAddToMac(item.model.id);
                       }
                     }}

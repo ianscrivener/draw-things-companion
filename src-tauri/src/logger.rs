@@ -1,9 +1,14 @@
 use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 
+// Global counter for generating unique log IDs
+static LOG_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogEvent {
+    pub id: u64,
     pub timestamp: String,
     pub level: String,  // "info", "success", "warning", "error"
     pub message: String,
@@ -11,8 +16,10 @@ pub struct LogEvent {
 
 impl LogEvent {
     pub fn new(level: &str, message: String) -> Self {
+        let id = LOG_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
         let timestamp = chrono::Local::now().format("%H:%M:%S").to_string();
         Self {
+            id,
             timestamp,
             level: level.to_string(),
             message,

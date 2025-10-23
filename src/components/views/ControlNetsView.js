@@ -8,6 +8,7 @@ export default function ControlNetsView() {
     macModels,
     stashModels,
     loading,
+    saving,
     error,
     hasUnsavedChanges,
     addToMac,
@@ -39,6 +40,7 @@ export default function ControlNetsView() {
       onCancel={cancelChanges}
       hasUnsavedChanges={hasUnsavedChanges}
       loading={loading}
+      saving={saving}
     />
   );
 }
