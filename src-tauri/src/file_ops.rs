@@ -106,3 +106,38 @@ pub fn get_model_extensions(model_type: &str) -> Vec<&'static str> {
         _ => vec![],
     }
 }
+
+/// Get available disk space for a given path (in bytes)
+#[cfg(target_os = "macos")]
+pub fn get_available_space<P: AsRef<Path>>(path: P) -> io::Result<u64> {
+    use std::ffi::CString;
+    use std::mem;
+    use std::os::unix::ffi::OsStrExt;
+
+    unsafe {
+        let path_cstring = CString::new(path.as_ref().as_os_str().as_bytes())
+            .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "Invalid path"))?;
+
+        let mut stat: libc::statfs = mem::zeroed();
+        if libc::statfs(path_cstring.as_ptr(), &mut stat) == 0 {
+            // Available blocks * block size = available bytes
+            Ok((stat.f_bavail as u64) * (stat.f_bsize as u64))
+        } else {
+            Err(io::Error::last_os_error())
+        }
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn get_available_space<P: AsRef<Path>>(_path: P) -> io::Result<u64> {
+    // Fallback for other platforms - return a large number
+    Ok(u64::MAX)
+}
+
+/// Check if there's enough space for a file copy operation
+pub fn has_enough_space<P: AsRef<Path>>(destination: P, required_bytes: u64) -> io::Result<bool> {
+    let available = get_available_space(destination)?;
+    // Add 10% buffer for safety
+    let required_with_buffer = required_bytes + (required_bytes / 10);
+    Ok(available >= required_with_buffer)
+}

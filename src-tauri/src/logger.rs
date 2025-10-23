@@ -17,7 +17,7 @@ pub struct LogEvent {
 impl LogEvent {
     pub fn new(level: &str, message: String) -> Self {
         let id = LOG_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
-        let timestamp = chrono::Local::now().format("%H:%M:%S").to_string();
+        let timestamp = chrono::Local::now().format("%H:%M:%S%.3f").to_string();
         Self {
             id,
             timestamp,

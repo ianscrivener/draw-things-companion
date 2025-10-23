@@ -12,6 +12,8 @@ export default function SettingsView() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResults, setScanResults] = useState(null);
 
   useEffect(() => {
     loadPaths();

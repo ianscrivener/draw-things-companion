@@ -231,6 +231,24 @@ pub fn copy_model_to_stash(
         return Err(format!("File already exists in stash: {}", model.filename));
     }
 
+    // Check if there's enough disk space
+    if let Some(file_size) = model.file_size {
+        let has_space = file_ops::has_enough_space(&stash_dir, file_size as u64)
+            .map_err(|e| format!("Failed to check disk space: {}", e))?;
+
+        if !has_space {
+            let available = file_ops::get_available_space(&stash_dir)
+                .map_err(|e| format!("Failed to get available space: {}", e))?;
+            let gb_available = available as f64 / (1024.0 * 1024.0 * 1024.0);
+            let gb_required = file_size as f64 / (1024.0 * 1024.0 * 1024.0);
+
+            return Err(format!(
+                "Insufficient disk space. Required: {:.2} GB, Available: {:.2} GB",
+                gb_required, gb_available
+            ));
+        }
+    }
+
     // Copy the file
     file_ops::copy_file(&source_path_buf, &stash_path)
         .map_err(|e| format!("Failed to copy file: {}", e))?;

@@ -29,9 +29,11 @@ pub fn run() {
             // Load environment variables from .env file
             env_config::load_env();
             
-            // Get app data directory
-            let app_dir = app.path().app_data_dir()
-                .expect("Failed to get app data directory");
+            // Get app directory from environment (DTC_APP_DIR) or fallback to default
+            let app_dir = env_config::get_app_dir()
+                .unwrap_or_else(|| {
+                    env_config::expand_path("~/.drawthings_companion")
+                });
             
             // Ensure app directory exists
             std::fs::create_dir_all(&app_dir)

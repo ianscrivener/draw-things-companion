@@ -39,7 +39,6 @@ pub fn get_stash_dir() -> Option<PathBuf> {
 }
 
 /// Get DTC_APP_DIR from environment
-#[allow(dead_code)]
 pub fn get_app_dir() -> Option<PathBuf> {
     env::var("DTC_APP_DIR")
         .ok()

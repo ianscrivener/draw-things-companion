@@ -899,6 +899,7 @@ dependencies = [
  "dotenvy",
  "fs",
  "hex",
+ "libc",
  "rusqlite",
  "serde",
  "serde_json",

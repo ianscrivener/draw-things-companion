@@ -22,23 +22,26 @@ export function useModels(modelType) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const allModels = await invoke('get_models', { modelType });
-      
+      console.log(`[useModels] Loaded ${allModels.length} ${modelType} models:`, allModels);
+
       // Separate into Mac and Stash lists
       const mac = allModels
         .filter(m => m.is_on_mac)
         .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-      
+
       const stash = allModels
         .sort((a, b) => a.model.filename.localeCompare(b.model.filename));
-      
+
+      console.log(`[useModels] Mac: ${mac.length}, Stash: ${stash.length}`);
+
       setModels(allModels);
       setMacModels(mac);
       setStashModels(stash);
     } catch (err) {
       setError(err.message || 'Failed to load models');
-      console.error('Error loading models:', err);
+      console.error('[useModels] Error loading models:', err);
     } finally {
       setLoading(false);
     }
@@ -56,13 +59,17 @@ export function useModels(modelType) {
 
     const newOrder = macModels.length;
     const updatedModel = { ...model, display_order: newOrder, is_on_mac: true };
-    
+
     setMacModels(prev => [...prev, updatedModel]);
-    setStashModels(prev => prev.map(m => 
+    setStashModels(prev => prev.map(m =>
       m.model.id === modelId ? updatedModel : m
     ));
-    
-    setPendingChanges(prev => [...prev, { action: 'add', modelId, order: newOrder }]);
+
+    // Deduplicate: remove any previous actions for this model, then add new action
+    setPendingChanges(prev => {
+      const filtered = prev.filter(c => c.modelId !== modelId);
+      return [...filtered, { action: 'add', modelId, order: newOrder }];
+    });
     setHasUnsavedChanges(true);
   }, [macModels, stashModels]);
 
@@ -72,13 +79,17 @@ export function useModels(modelType) {
     if (!model) return;
 
     const updatedModel = { ...model, display_order: null, is_on_mac: false };
-    
+
     setMacModels(prev => prev.filter(m => m.model.id !== modelId));
-    setStashModels(prev => prev.map(m => 
+    setStashModels(prev => prev.map(m =>
       m.model.id === modelId ? updatedModel : m
     ));
-    
-    setPendingChanges(prev => [...prev, { action: 'remove', modelId }]);
+
+    // Deduplicate: remove any previous actions for this model, then add new action
+    setPendingChanges(prev => {
+      const filtered = prev.filter(c => c.modelId !== modelId);
+      return [...filtered, { action: 'remove', modelId }];
+    });
     setHasUnsavedChanges(true);
   }, [macModels]);
 
@@ -88,16 +99,11 @@ export function useModels(modelType) {
       ...model,
       display_order: index,
     }));
-    
+
     setMacModels(updatedModels);
-    
-    const orderUpdates = updatedModels.map(m => ({
-      action: 'reorder',
-      modelId: m.model.id,
-      order: m.display_order,
-    }));
-    
-    setPendingChanges(prev => [...prev, ...orderUpdates]);
+
+    // Don't add reorder to pendingChanges - we use macModels snapshot during save
+    // This prevents accumulating hundreds of redundant reorder operations
     setHasUnsavedChanges(true);
   }, []);
 
