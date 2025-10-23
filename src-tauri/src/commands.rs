@@ -260,6 +260,49 @@ pub fn copy_model_to_stash(
 }
 
 #[tauri::command]
+pub fn delete_model(
+    model_id: i64,
+    delete_files: bool,
+    state: State<AppState>,
+) -> Result<(), String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+
+    // Get model info before deleting (for file deletion)
+    let model = operations::get_model_by_id(&conn, model_id)
+        .map_err(|e| e.to_string())?
+        .ok_or("Model not found")?;
+
+    // Delete files if requested
+    if delete_files {
+        // Delete from source_path if it exists
+        if let Some(ref source_path) = model.source_path {
+            let source_path_buf = PathBuf::from(source_path);
+            if source_path_buf.exists() {
+                std::fs::remove_file(&source_path_buf)
+                    .map_err(|e| format!("Failed to delete source file: {}", e))?;
+            }
+        }
+
+        // Delete from stash if it exists
+        let stash_model = operations::get_stash_model_by_model_id(&conn, model_id)
+            .map_err(|e| e.to_string())?;
+
+        if let Some(stash) = stash_model {
+            let stash_path = PathBuf::from(&stash.stash_path);
+            if stash_path.exists() {
+                std::fs::remove_file(&stash_path)
+                    .map_err(|e| format!("Failed to delete stash file: {}", e))?;
+            }
+        }
+    }
+
+    // Delete from database (cascades to mac_models and stash_models)
+    operations::delete_model(&conn, model_id).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn initialize_app(
     dt_base_dir: String,
     stash_dir: String,

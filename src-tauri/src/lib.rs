@@ -121,6 +121,7 @@ pub fn run() {
             commands::update_models_order,
             commands::scan_mac_models,
             commands::copy_model_to_stash,
+            commands::delete_model,
             commands::initialize_app,
             commands::get_all_logs,
         ])

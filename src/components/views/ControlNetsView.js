@@ -16,6 +16,7 @@ export default function ControlNetsView() {
     reorderMac,
     saveChanges,
     cancelChanges,
+    reload,
   } = useModels('controlnet');
 
   if (error) {
@@ -38,6 +39,7 @@ export default function ControlNetsView() {
       onRemoveFromMac={removeFromMac}
       onSave={saveChanges}
       onCancel={cancelChanges}
+      onReload={reload}
       hasUnsavedChanges={hasUnsavedChanges}
       loading={loading}
       saving={saving}

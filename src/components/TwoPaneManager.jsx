@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useDragAndDrop } from '@formkit/drag-and-drop/react';
-import { Save, X, HardDrive, Archive } from 'lucide-react';
+import { Save, X, HardDrive, Archive, Trash2 } from 'lucide-react';
+import { invoke } from '@tauri-apps/api/core';
 
 export default function TwoPaneManager({
   modelType,
@@ -14,12 +15,17 @@ export default function TwoPaneManager({
   onRemoveFromMac,
   onSave,
   onCancel,
+  onReload,
   hasUnsavedChanges = false,
   loading = false,
   saving = false,
 }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedModel, setSelectedModel] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [modelToDelete, setModelToDelete] = useState(null);
+  const [deleteFiles, setDeleteFiles] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Initialize drag and drop for Mac pane
   const [macListRef, macItems, setMacItems] = useDragAndDrop(
@@ -55,6 +61,41 @@ export default function TwoPaneManager({
   // Check if model is in Mac pane
   const isOnMac = (modelId) => {
     return macModels.some(m => m.model.id === modelId);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteClick = (model) => {
+    setModelToDelete(model);
+    setDeleteFiles(false);
+    setShowDeleteConfirm(true);
+  };
+
+  // Handle delete model
+  const handleDeleteModel = async () => {
+    if (!modelToDelete) return;
+
+    try {
+      setDeleting(true);
+      await invoke('delete_model', {
+        modelId: modelToDelete.model.id,
+        deleteFiles: deleteFiles,
+      });
+
+      // Close confirmation dialog
+      setShowDeleteConfirm(false);
+      setModelToDelete(null);
+      setDeleteFiles(false);
+
+      // Reload models if there's a reload function
+      if (onReload) {
+        await onReload();
+      }
+    } catch (error) {
+      console.error('Failed to delete model:', error);
+      alert(`Failed to delete model: ${error}`);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -186,6 +227,17 @@ export default function TwoPaneManager({
                         On Mac
                       </div>
                     )}
+                    <button
+                      className="bg-transparent border border-gray-250 rounded-sm p-1.5 cursor-pointer transition-all text-gray-700 hover:bg-error-light hover:border-error-dark hover:text-error-dark disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-250 disabled:hover:text-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(item);
+                      }}
+                      disabled={saving || deleting}
+                      title="Delete model"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 );
               })
@@ -236,6 +288,70 @@ export default function TwoPaneManager({
                 <span className="font-bold text-gray-700">On Mac HD:</span>
                 <span className="text-gray-800 break-all">{selectedModel.is_on_mac ? 'Yes' : 'No'}</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && modelToDelete && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-modal"
+          onClick={() => !deleting && setShowDeleteConfirm(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-md w-[90%]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 bg-error-light rounded-full flex items-center justify-center">
+                <Trash2 size={24} className="text-error-dark" />
+              </div>
+              <h3 className="m-0 text-2xl font-bold text-gray-900">Delete Model?</h3>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Are you sure you want to delete <strong>{modelToDelete.model.filename}</strong>?
+              </p>
+              <p className="text-sm text-gray-600 mb-4">
+                This will remove the model from the database{modelToDelete.is_on_mac ? ' and from Mac HD' : ''}.
+              </p>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteFiles}
+                  onChange={(e) => setDeleteFiles(e.target.checked)}
+                  disabled={deleting}
+                  className="w-4 h-4 cursor-pointer"
+                />
+                <span className="text-sm text-gray-700">
+                  Also delete file(s) from disk
+                </span>
+              </label>
+              {deleteFiles && (
+                <p className="text-xs text-error-dark mt-2 ml-6">
+                  ⚠️ This action cannot be undone!
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                className="px-5 py-2.5 border border-gray-250 rounded-md text-md font-semibold cursor-pointer transition-all bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-5 py-2.5 border-none rounded-md text-md font-semibold cursor-pointer transition-all bg-error text-white hover:bg-error-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleDeleteModel}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
             </div>
           </div>
         </div>

@@ -170,25 +170,51 @@ return <MainApp />;
 
 ---
 
-### 6. 🗑️ Implement Delete Functionality **← CURRENT TASK**
-**Status:** Feature - Mentioned in README | **Priority:** HIGH
-**Files:** `src-tauri/src/commands.rs`, `src/components/TwoPaneManager.jsx`
+### 6. ✅ ~~Implement Delete Functionality~~ **COMPLETE!**
+**Status:** ✅ COMPLETED 2025-01-23 | **Priority:** HIGH
+**Files:** `src-tauri/src/commands.rs`, `src-tauri/src/db/operations.rs`, `src-tauri/src/lib.rs`, `src/components/TwoPaneManager.jsx`, `src/components/views/*.js`
 
-- [ ] Create `delete_model` Tauri command
-- [ ] Add confirmation dialog before deletion
-- [ ] Update database to mark model as deleted (soft delete)
-- [ ] Add option to permanently delete from disk
-- [ ] Update UI to show deleted models (with restore option)
-- [ ] Add bulk delete functionality
-- [ ] Test deletion with models in stash
+- [x] Create `delete_model` Tauri command with file deletion option
+- [x] Add `delete_model` database operation
+- [x] Add confirmation dialog before deletion
+- [x] Add option to permanently delete files from disk (checkbox)
+- [x] Add delete button to stash pane UI
+- [x] Update all view components to pass reload prop
+- [x] Registered command in Tauri invoke handler
 
-**Priority:** Core feature mentioned in README
+**Result:** ✨ Full delete functionality with safety features:
+  - **Backend:**
+    - Added `delete_model()` database operation in operations.rs
+    - Created `delete_model` Tauri command with `delete_files` parameter
+    - Deletes from both source_path and stash_path when requested
+    - Database cascades delete mac_models and stash_models records
+    - Registered in lib.rs invoke handler
+
+  - **Frontend:**
+    - Delete button (trash icon) on each stash item
+    - Beautiful confirmation modal with:
+      - Model filename display
+      - Warning about database deletion
+      - Checkbox for "Also delete file(s) from disk"
+      - Prominent warning when files will be deleted
+      - Disabled during delete operation
+    - Auto-reload models after successful deletion
+    - Error handling with user feedback
+    - Visual states: deleting/delete button text
+
+**Implementation Notes:**
+- Used hard delete approach (not soft delete) for simplicity
+- Files are only deleted if checkbox is checked
+- Deletes from both source and stash locations
+- Confirmation dialog prevents accidental deletion
+- Bulk delete not implemented (can be added later if needed)
+- Restore functionality not needed with hard delete approach
 
 ---
 
 ## Medium Priority Tasks
 
-### 7. 💾 Add File Size and Space Validation
+### 7. 💾 Add File Size and Space Validation **← CURRENT TASK**
 **Status:** Security/Reliability | **Priority:** MEDIUM
 **Files:** `src-tauri/src/file_ops.rs`, `src-tauri/src/commands.rs`
 

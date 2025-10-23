@@ -16,6 +16,7 @@ export default function LoRAsView() {
     reorderMac,
     saveChanges,
     cancelChanges,
+    reload,
   } = useModels('lora');
 
   if (error) {
@@ -38,6 +39,7 @@ export default function LoRAsView() {
       onRemoveFromMac={removeFromMac}
       onSave={saveChanges}
       onCancel={cancelChanges}
+      onReload={reload}
       hasUnsavedChanges={hasUnsavedChanges}
       loading={loading}
       saving={saving}

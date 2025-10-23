@@ -107,6 +107,12 @@ pub fn get_models_by_type(conn: &Connection, model_type: &str) -> Result<Vec<Mod
     Ok(models)
 }
 
+pub fn delete_model(conn: &Connection, model_id: i64) -> Result<()> {
+    // Delete from models table (cascade will handle mac_models and stash_models)
+    conn.execute("DELETE FROM models WHERE id = ?1", params![model_id])?;
+    Ok(())
+}
+
 // Mac Model operations
 pub fn insert_mac_model(conn: &Connection, mac_model: &MacModel) -> Result<i64> {
     conn.execute(

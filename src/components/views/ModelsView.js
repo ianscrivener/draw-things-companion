@@ -16,6 +16,7 @@ export default function ModelsView() {
     reorderMac,
     saveChanges,
     cancelChanges,
+    reload,
   } = useModels('model');
 
   if (error) {
@@ -38,6 +39,7 @@ export default function ModelsView() {
       onRemoveFromMac={removeFromMac}
       onSave={saveChanges}
       onCancel={cancelChanges}
+      onReload={reload}
       hasUnsavedChanges={hasUnsavedChanges}
       loading={loading}
       saving={saving}
