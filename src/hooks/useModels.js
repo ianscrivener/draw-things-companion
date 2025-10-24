@@ -32,7 +32,8 @@ export function useModels(modelType) {
         .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
       const stash = allModels
-        .sort((a, b) => a.model.filename.localeCompare(b.model.filename));
+        .filter(m => !m.is_on_mac)
+        .sort((a, b) => (a.model.id || '').localeCompare(b.model.id || ''));
 
       console.log(`[useModels] Mac: ${mac.length}, Stash: ${stash.length}`);
 

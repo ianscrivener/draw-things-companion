@@ -137,19 +137,21 @@ pub fn get_models(model_type: Option<String>, state: State<AppState>) -> Result<
 // Mac model commands
 #[tauri::command]
 pub fn add_model_to_mac(
-    filename: String,
+    model_id: String,
     display_order: i32,
     state: State<AppState>,
 ) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::update_mac_hd_status(&conn, &filename, true, Some(display_order))
+    // model_id is actually the filename (primary key)
+    operations::update_mac_hd_status(&conn, &model_id, true, Some(display_order))
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn remove_model_from_mac(filename: String, state: State<AppState>) -> Result<(), String> {
+pub fn remove_model_from_mac(model_id: String, state: State<AppState>) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::update_mac_hd_status(&conn, &filename, false, None)
+    // model_id is actually the filename (primary key)
+    operations::update_mac_hd_status(&conn, &model_id, false, None)
         .map_err(|e| e.to_string())
 }
 
@@ -337,14 +339,14 @@ pub fn copy_model_to_stash(
 
 #[tauri::command]
 pub fn delete_model(
-    filename: String,
+    model_id: String,
     delete_files: bool,
     state: State<AppState>,
 ) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
 
-    // Get model info before deleting
-    let model = operations::get_model_by_filename(&conn, &filename)
+    // Get model info before deleting (model_id is actually the filename)
+    let model = operations::get_model_by_filename(&conn, &model_id)
         .map_err(|e| e.to_string())?
         .ok_or("Model not found")?;
 
@@ -367,8 +369,8 @@ pub fn delete_model(
                 .map_err(|e| e.to_string())?
                 .clone()
                 .ok_or("STASH_DIR not configured")?;
-            
-            let stash_path = stash_dir.join(&filename);
+
+            let stash_path = stash_dir.join(&model_id);
             if stash_path.exists() {
                 std::fs::remove_file(&stash_path)
                     .map_err(|e| format!("Failed to delete stash file: {}", e))?;
@@ -377,7 +379,7 @@ pub fn delete_model(
     }
 
     // Delete from database
-    operations::delete_model(&conn, &filename).map_err(|e| e.to_string())?;
+    operations::delete_model(&conn, &model_id).map_err(|e| e.to_string())?;
 
     Ok(())
 }

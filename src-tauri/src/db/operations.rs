@@ -33,7 +33,7 @@ pub fn get_all_models(conn: &Connection) -> Result<Vec<ModelResponse>> {
     .collect::<Result<Vec<_>>>()?;
 
     Ok(models.into_iter().map(|model| {
-        let is_on_mac = model.exists_mac_hd;
+        let is_on_mac = model.mac_display_order.is_some();
         ModelResponse { model, is_on_mac }
     }).collect())
 }
@@ -100,14 +100,15 @@ pub fn insert_or_update_model(conn: &Connection, model: &CkptModel) -> Result<()
     Ok(())
 }
 
-pub fn update_mac_hd_status(conn: &Connection, filename: &str, is_on_mac: bool, display_order: Option<i32>) -> Result<()> {
+pub fn update_mac_hd_status(conn: &Connection, filename: &str, _is_on_mac: bool, display_order: Option<i32>) -> Result<()> {
+    // Note: exists_mac_hd should only be updated during file scanning, not when adding/removing from Mac pane
+    // We only update mac_display_order here to control which models appear in the Mac pane
     conn.execute(
-        "UPDATE ckpt_models 
-         SET exists_mac_hd = ?1, 
-             mac_display_order = ?2,
+        "UPDATE ckpt_models
+         SET mac_display_order = ?1,
              updated_at = CURRENT_TIMESTAMP
-         WHERE filename = ?3",
-        params![is_on_mac, display_order, filename],
+         WHERE filename = ?2",
+        params![display_order, filename],
     )?;
     Ok(())
 }

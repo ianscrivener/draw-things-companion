@@ -153,7 +153,7 @@ export default function TwoPaneManager({
                   </div>
                   <div className="flex-1">
                     <div className="text-md font-semibold mb-1 break-words">
-                      {item.custom_name || item.model.display_name || item.model.filename}
+                      {item.custom_name || item.model.display_name || item.model.id}
                     </div>
                     <div className="text-sm text-gray-700 flex gap-3">
                       {formatFileSize(item.model.file_size)}
@@ -216,7 +216,7 @@ export default function TwoPaneManager({
                   >
                     <div className="flex-1">
                       <div className="text-md font-semibold mb-1 break-words">
-                        {item.model.display_name || item.model.filename}
+                        {item.model.display_name || item.model.id}
                       </div>
                       <div className="text-sm text-gray-700">
                         {formatFileSize(item.model.file_size)}
@@ -268,7 +268,7 @@ export default function TwoPaneManager({
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <span className="font-bold text-gray-700">Filename:</span>
-                <span className="text-gray-800 break-all">{selectedModel.model.filename}</span>
+                <span className="text-gray-800 break-all">{selectedModel.model.id}</span>
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <span className="font-bold text-gray-700">Type:</span>
@@ -312,7 +312,7 @@ export default function TwoPaneManager({
 
             <div className="mb-6">
               <p className="text-gray-700 mb-4">
-                Are you sure you want to delete <strong>{modelToDelete.model.filename}</strong>?
+                Are you sure you want to delete <strong>{modelToDelete.model.id}</strong>?
               </p>
               <p className="text-sm text-gray-600 mb-4">
                 This will remove the model from the database{modelToDelete.is_on_mac ? ' and from Mac HD' : ''}.

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CkptModel {
+    #[serde(rename = "id", alias = "filename")]
     pub filename: String,
     pub display_name: Option<String>,
     pub model_type: String,
