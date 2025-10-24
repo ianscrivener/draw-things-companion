@@ -72,24 +72,24 @@ module.exports = {
 
       // Border Radius
       borderRadius: {
-        'sm': '4px',
-        DEFAULT: '6px',
-        'md': '6px',
-        'lg': '8px',
-        'xl': '12px',
+        'sm': '3px',
+        DEFAULT: '5px',
+        'md': '5px',
+        'lg': '7px',
+        'xl': '10px',
       },
 
       // Font Sizes
       fontSize: {
-        'xxs': ['10px', { lineHeight: '1.4' }],
-        'xs': ['11px', { lineHeight: '1.4' }],
-        'sm': ['12px', { lineHeight: '1.5' }],
-        'base': ['13px', { lineHeight: '1.5' }],
-        'md': ['14px', { lineHeight: '1.5' }],
-        'lg': ['16px', { lineHeight: '1.5' }],
-        'xl': ['18px', { lineHeight: '1.4' }],
-        '2xl': ['20px', { lineHeight: '1.4' }],
-        '3xl': ['24px', { lineHeight: '1.3' }],
+        'xxs': ['8px', { lineHeight: '1.4' }],
+        'xs': ['9px', { lineHeight: '1.4' }],
+        'sm': ['10px', { lineHeight: '1.5' }],
+        'base': ['11px', { lineHeight: '1.5' }],
+        'md': ['12px', { lineHeight: '1.5' }],
+        'lg': ['13px', { lineHeight: '1.5' }],
+        'xl': ['15px', { lineHeight: '1.4' }],
+        '2xl': ['18px', { lineHeight: '1.4' }],
+        '3xl': ['22px', { lineHeight: '1.3' }],
       },
 
       // Font Families

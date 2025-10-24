@@ -34,7 +34,7 @@ export default function Nav({ activeItem = 'models', onNavigate }) {
   };
 
   return (
-    <nav className="w-[90px] h-full bg-gray-100 border-r border-gray-300 flex flex-col pt-lg">
+    <nav className="w-[80px] h-full bg-gray-100 border-r border-gray-300 flex flex-col pt-lg">
       {navItems.map(({ id, icon: Icon, label }) => (
         <div
           key={id}
@@ -48,8 +48,8 @@ export default function Nav({ activeItem = 'models', onNavigate }) {
         >
           <Icon
             className={`mb-1 ${active === id ? 'text-brand' : 'text-gray-800'}`}
-            size={24}
-            strokeWidth={2}
+            size={20}
+            strokeWidth={1.5}
           />
           <div>{label}</div>
         </div>

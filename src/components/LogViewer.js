@@ -96,12 +96,12 @@ export default function LogViewer() {
   return (
     <>
       <div
-        className="flex items-center gap-3 px-4 py-2 bg-dark-300 border-t border-dark-200 fixed bottom-0 left-0 right-0 z-log-viewer h-log-viewer box-border"
+        className="flex items-center gap-3 px-2 py-1 bg-dark-300 border-t border-dark-200 fixed bottom-0 left-0 right-0 z-log-viewer h-log-viewer box-border"
         data-testid="log-viewer"
       >
         <button
           className={`
-            bg-transparent border-none text-gray-600 cursor-pointer p-1
+            bg-transparent border-none text-gray-600 cursor-pointer p-1 px-2
             flex items-center justify-center transition-colors duration-300 flex-shrink-0
             hover:text-white
             ${flashClass === 'active' ? 'animate-flash' : ''}
@@ -109,14 +109,14 @@ export default function LogViewer() {
           onClick={() => setShowModal(true)}
           title="View full logs"
         >
-          <Clipboard size={16} />
+          <Clipboard size={14} />
         </button>
 
         <div className="text-xs text-gray-400 font-mono whitespace-nowrap overflow-hidden text-ellipsis flex-1">
           {getLatestMessage()}
         </div>
 
-        <div className="ml-auto text-xxs text-gray-700 flex-shrink-0">
+        <div className="ml-auto text-xxs text-gray-400 px-2 flex-shrink-0">
           {logs.length} logs
         </div>
       </div>

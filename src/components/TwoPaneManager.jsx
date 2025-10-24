@@ -101,11 +101,11 @@ export default function TwoPaneManager({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between items-center px-8 py-6 border-b border-gray-250 bg-white">
-        <h1 className="m-0 text-3xl font-bold">{title}</h1>
+      <div className="flex justify-between items-center px-8 py-3 border-b border-gray-250 bg-white">
+        <h1 className="m-0 text-2xl font-bold">{title}</h1>
         <div className="flex gap-3">
           <button
-            className="flex items-center gap-2 px-5 py-2.5 border border-gray-250 rounded-md text-md font-semibold cursor-pointer transition-all bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-3 py-1 border border-gray-250 rounded-md text-md font-semibold cursor-pointer transition-all bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={onCancel}
             disabled={!hasUnsavedChanges || loading || saving}
           >
@@ -113,7 +113,7 @@ export default function TwoPaneManager({
             Cancel
           </button>
           <button
-            className="flex items-center gap-2 px-5 py-2.5 border-none rounded-md text-md font-semibold cursor-pointer transition-all bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-3 py-1 border-none rounded-md text-md font-semibold cursor-pointer transition-all bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onSave}
             disabled={!hasUnsavedChanges || loading || saving}
           >
@@ -127,10 +127,10 @@ export default function TwoPaneManager({
       <div className="grid grid-cols-2 gap-0 flex-1 overflow-hidden">
         {/* Left Pane - Mac HD */}
         <div className="flex flex-col h-full overflow-hidden border-r-2 border-gray-250">
-          <div className="flex items-center gap-3 px-6 py-5 bg-gray-100 border-b border-gray-250">
-            <HardDrive size={20} />
+          <div className="flex items-center gap-3 px-6 py-1.5 bg-gray-100 border-b border-gray-250">
+            <HardDrive size={16} />
             <h2 className="m-0 text-xl font-bold flex-1">Macintosh HD</h2>
-            <span className="bg-gray-250 px-2.5 py-1 rounded-xl text-base font-semibold text-gray-700">
+            <span className="bg-gray-250 px-2.5 py-0.5 rounded-xl text-base font-semibold text-gray-700">
               {macModels.length}
             </span>
           </div>
@@ -144,7 +144,7 @@ export default function TwoPaneManager({
               macModels.map((item, index) => (
                 <div
                   key={item.model.id}
-                  className={`flex items-center gap-3 px-4 py-3 bg-white border border-gray-250 rounded-md mb-2 transition-all hover:border-brand hover:shadow-elevation-sm ${saving ? 'cursor-not-allowed opacity-60' : 'cursor-grab active:cursor-grabbing'}`}
+                  className={`flex items-center gap-3 px-4 py-2 bg-white border border-gray-250 rounded-md mb-2 transition-all hover:border-brand hover:shadow-elevation-sm ${saving ? 'cursor-not-allowed opacity-60' : 'cursor-grab active:cursor-grabbing'}`}
                   onDoubleClick={() => handleModelClick(item)}
                   data-drag-disabled={saving}
                 >
@@ -183,10 +183,10 @@ export default function TwoPaneManager({
 
         {/* Right Pane - Stash */}
         <div className="flex flex-col h-full overflow-hidden">
-          <div className="flex items-center gap-3 px-6 py-5 bg-gray-100 border-b border-gray-250">
-            <Archive size={20} />
+          <div className="flex items-center gap-3 px-6 py-1.5 bg-gray-100 border-b border-gray-250">
+            <Archive size={16} />
             <h2 className="m-0 text-xl font-bold flex-1">Stash</h2>
-            <span className="bg-gray-250 px-2.5 py-1 rounded-xl text-base font-semibold text-gray-700">
+            <span className="bg-gray-250 px-2.5 py-0.5 rounded-xl text-base font-semibold text-gray-700">
               {stashModels.length}
             </span>
           </div>
@@ -202,7 +202,7 @@ export default function TwoPaneManager({
                   <div
                     key={item.model.id}
                     className={`
-                      flex items-center gap-3 px-4 py-3 bg-white border border-gray-250 rounded-md mb-2 transition-all
+                      flex items-center gap-3 px-4 py-2 bg-white border border-gray-250 rounded-md mb-2 transition-all
                       hover:border-brand hover:shadow-elevation-sm
                       ${onMac ? 'opacity-50 bg-gray-50 hover:opacity-60' : ''}
                       ${saving ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
