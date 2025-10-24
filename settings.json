@@ -6,5 +6,11 @@
         "pose": ["OpenPose", "Mediapipe"],
         "segmentation": ["U2Net", "MODNet"],
         "canny": ["Edge", "Canny"]  
+    },
+    "github_model_types": {
+        "models": "https://raw.githubusercontent.com/drawthingsai/community-models/refs/heads/main/models.txt",
+        "loras": "https://raw.githubusercontent.com/drawthingsai/community-models/refs/heads/main/loras.txt",
+        "embeddings": "https://raw.githubusercontent.com/drawthingsai/community-models/refs/heads/main/embeddings.txt",
+        "controlnets":"https://raw.githubusercontent.com/drawthingsai/community-models/refs/heads/main/controlnets.txt"
     }
 }

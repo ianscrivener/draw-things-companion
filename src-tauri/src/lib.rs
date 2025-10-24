@@ -4,6 +4,8 @@ mod commands;
 mod env_config;
 mod first_run;
 mod logger;
+mod dt_json;
+mod github_model_types;
 
 use commands::AppState;
 use logger::LogStore;

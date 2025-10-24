@@ -1,4 +1,5 @@
 use crate::db::{models::*, operations};
+use crate::dt_json::DrawThingsConfig;
 use crate::file_ops;
 use crate::logger::{LogEvent, LogStore};
 use rusqlite::Connection;
@@ -118,9 +119,19 @@ pub fn update_stash_dir(new_stash_dir: String, state: State<AppState>) -> Result
 
 // Model query commands
 #[tauri::command]
-pub fn get_models(state: State<AppState>) -> Result<Vec<ModelResponse>, String> {
+pub fn get_models(model_type: Option<String>, state: State<AppState>) -> Result<Vec<ModelResponse>, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
-    operations::get_all_models(&conn).map_err(|e| e.to_string())
+
+    let all_models = operations::get_all_models(&conn).map_err(|e| e.to_string())?;
+
+    // Filter by model_type if provided
+    if let Some(type_filter) = model_type {
+        Ok(all_models.into_iter()
+            .filter(|m| m.model.model_type == type_filter)
+            .collect())
+    } else {
+        Ok(all_models)
+    }
 }
 
 // Mac model commands
@@ -186,6 +197,10 @@ pub fn scan_mac_models(state: State<AppState>) -> Result<ScanResult, String> {
         .ok_or("DT_BASE_DIR not configured")?;
 
     let model_dir = dt_base_dir.join("Models");
+
+    // Parse DrawThings JSON configuration files
+    let dt_config = DrawThingsConfig::parse_from_directory(&model_dir)?;
+
     let extensions = vec!["ckpt", "safetensors", "pth", "pt"];
     let files = file_ops::scan_directory(&model_dir, &extensions)
         .map_err(|e| e.to_string())?;
@@ -195,9 +210,43 @@ pub fn scan_mac_models(state: State<AppState>) -> Result<ScanResult, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
 
     for file_path in &files {
-        match import_model_file(&conn, file_path, true) {
+        match import_model_file(&conn, file_path, true, &dt_config) {
             Ok(_) => imported_count += 1,
             Err(e) => errors.push(format!("{}: {}", file_path.display(), e)),
+        }
+    }
+
+    // Now populate relationships for main models
+    // Only add relationships for files that actually exist in the database
+    for model in &dt_config.models {
+        // Check if parent model exists in database
+        let parent_exists = operations::get_model_by_filename(&conn, &model.file)
+            .map(|m| m.is_some())
+            .unwrap_or(false);
+
+        if !parent_exists {
+            // Skip - model in JSON but file doesn't exist on disk
+            continue;
+        }
+
+        if let Some(encoders) = dt_config.get_model_encoders(&model.file) {
+            for encoder_file in encoders {
+                // Check if encoder exists in database
+                let encoder_exists = operations::get_model_by_filename(&conn, &encoder_file)
+                    .map(|m| m.is_some())
+                    .unwrap_or(false);
+
+                if !encoder_exists {
+                    // Skip silently - encoder file not found
+                    continue;
+                }
+
+                // Both parent and child exist, add relationship
+                if let Err(e) = operations::add_relationship(&conn, &model.file, &encoder_file) {
+                    errors.push(format!("Failed to add relationship {} -> {}: {}",
+                        model.file, encoder_file, e));
+                }
+            }
         }
     }
 
@@ -360,6 +409,7 @@ fn import_model_file(
     conn: &Connection,
     file_path: &Path,
     from_mac_hd: bool,
+    dt_config: &DrawThingsConfig,
 ) -> Result<(), String> {
     let filename = file_path
         .file_name()
@@ -371,12 +421,37 @@ fn import_model_file(
     if let Some(mut existing) = operations::get_model_by_filename(conn, &filename)
         .map_err(|e| e.to_string())?
     {
-        // Update location flag
+        // Update location flag and potentially update metadata from JSON
         if from_mac_hd {
             existing.exists_mac_hd = true;
+
+            // Update display order from JSON if available
+            if let Some(order) = dt_config.get_display_order(&filename) {
+                existing.mac_display_order = Some(order);
+            }
         } else {
             existing.exists_stash = true;
         }
+
+        // Update display name if available in JSON
+        if existing.display_name.is_none() {
+            if let Some(name) = dt_config.get_display_name(&filename) {
+                existing.display_name = Some(name);
+            }
+        }
+
+        // Update model type if available in JSON
+        if let Some(model_type) = dt_config.get_model_type(&filename) {
+            existing.model_type = model_type;
+        }
+
+        // Update LoRA strength if available in JSON
+        if existing.lora_strength.is_none() {
+            if let Some(strength) = dt_config.get_lora_strength(&filename) {
+                existing.lora_strength = Some(strength);
+            }
+        }
+
         operations::insert_or_update_model(conn, &existing).map_err(|e| e.to_string())?;
         return Ok(());
     }
@@ -388,21 +463,29 @@ fn import_model_file(
     // Skip checksum for speed
     let checksum = None;
 
-    // Detect model type from filename
-    let model_type = detect_model_type(&filename);
+    // Get metadata from JSON or fallback to detection
+    let display_name = dt_config.get_display_name(&filename);
+    let model_type = dt_config.get_model_type(&filename)
+        .unwrap_or_else(|| detect_model_type(&filename));
+    let mac_display_order = if from_mac_hd {
+        dt_config.get_display_order(&filename)
+    } else {
+        None
+    };
+    let lora_strength = dt_config.get_lora_strength(&filename);
 
     // Create model record
     let model = CkptModel {
         filename: filename.clone(),
-        display_name: None,
+        display_name,
         model_type,
         file_size: Some(file_size as i64),
         checksum,
         source_path: Some(file_path.to_string_lossy().to_string()),
         exists_mac_hd: from_mac_hd,
         exists_stash: !from_mac_hd,
-        mac_display_order: None,
-        lora_strength: None,
+        mac_display_order,
+        lora_strength,
         created_at: None,
         updated_at: None,
     };
@@ -413,22 +496,37 @@ fn import_model_file(
 
 fn detect_model_type(filename: &str) -> String {
     let filename_lower = filename.to_lowercase();
-    
+
+    // LoRA models
     if filename_lower.contains("lora") || filename_lower.contains("lycoris") {
         "lora".to_string()
-    } else if filename_lower.contains("control") || filename_lower.contains("t2i") {
+    }
+    // ControlNet models
+    else if filename_lower.contains("control") || filename_lower.contains("t2i") {
         "control".to_string()
-    } else if filename_lower.contains("clip") {
+    }
+    // CLIP encoders (including vision transformers)
+    else if filename_lower.contains("clip") || filename_lower.contains("vit") || filename_lower.contains("vision_model") {
         "clip".to_string()
-    } else if filename_lower.contains("text") || filename_lower.contains("encoder") {
+    }
+    // Text encoders
+    else if filename_lower.contains("text_encoder") || filename_lower.contains("t5") {
         "text".to_string()
-    } else if filename_lower.contains("vae") {
+    }
+    // VAE / Autoencoders
+    else if filename_lower.contains("vae") || filename_lower.contains("autoencoder") {
         "vae".to_string()
-    } else if filename_lower.contains("upscale") {
-        "upscaler".to_string()
-    } else if filename_lower.contains("face") {
+    }
+    // Face restoration models
+    else if filename_lower.contains("face") || filename_lower.contains("gfpgan") || filename_lower.contains("restoreformer") {
         "face_restorer".to_string()
-    } else {
-        "model".to_string()
+    }
+    // Upscaler models
+    else if filename_lower.contains("upscale") || filename_lower.contains("esrgan") || filename_lower.contains("realesrgan") {
+        "upscaler".to_string()
+    }
+    // Files not in JSON and not matching patterns - mark as unknown
+    else {
+        "unknown".to_string()
     }
 }

@@ -180,7 +180,6 @@ pub fn set_config(conn: &Connection, key: &str, value: &str) -> Result<()> {
 }
 
 // Relationship operations
-#[allow(dead_code)]
 pub fn add_relationship(conn: &Connection, parent: &str, child: &str) -> Result<()> {
     conn.execute(
         "INSERT OR IGNORE INTO ckpt_x_ckpt (parent_ckpt_filename, child_ckpt_filename)
@@ -190,7 +189,6 @@ pub fn add_relationship(conn: &Connection, parent: &str, child: &str) -> Result<
     Ok(())
 }
 
-#[allow(dead_code)]
 pub fn get_relationships(conn: &Connection, parent_filename: &str) -> Result<Vec<CkptRelationship>> {
     let mut stmt = conn.prepare(
         "SELECT id, parent_ckpt_filename, child_ckpt_filename, created_at
@@ -214,7 +212,7 @@ pub fn get_relationships(conn: &Connection, parent_filename: &str) -> Result<Vec
 #[allow(dead_code)]
 pub fn delete_relationship(conn: &Connection, parent: &str, child: &str) -> Result<()> {
     conn.execute(
-        "DELETE FROM ckpt_x_ckpt 
+        "DELETE FROM ckpt_x_ckpt
          WHERE parent_ckpt_filename = ?1 AND child_ckpt_filename = ?2",
         params![parent, child],
     )?;

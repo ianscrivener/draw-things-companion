@@ -17,7 +17,7 @@ export default function ControlNetsView() {
     saveChanges,
     cancelChanges,
     reload,
-  } = useModels('controlnet');
+  } = useModels('control');
 
   if (error) {
     return (
@@ -30,7 +30,7 @@ export default function ControlNetsView() {
 
   return (
     <TwoPaneManager
-      modelType="controlnet"
+      modelType="control"
       title="ControlNet Models"
       macModels={macModels}
       stashModels={stashModels}

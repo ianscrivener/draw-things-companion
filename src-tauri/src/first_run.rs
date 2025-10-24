@@ -1,4 +1,5 @@
 use crate::db::operations;
+use crate::dt_json::DrawThingsConfig;
 use crate::file_ops;
 use crate::logger;
 use rusqlite::Connection;
@@ -51,14 +52,20 @@ pub fn initialize_stash(
         logger::log_info(app, "Syncing models with DrawThings directory...".to_string());
     }
     
-    // Copy/update all JSON config files first
+    // Copy/update all JSON config files first (fast)
     copy_json_files(app, dt_base_dir, stash_dir)?;
-    
-    // Then sync model files to ensure stash is up-to-date
+
+    // Scan and import models into database FIRST (fast - just metadata)
+    // This makes the app usable immediately
+    scan_and_import_models(app, conn, dt_base_dir, stash_dir)?;
+
+    // Then sync model files to ensure stash is up-to-date (slow - multi-GB files)
+    // This happens after database is populated so app is already functional
     transfer_model_files(app, dt_base_dir, stash_dir)?;
 
-    // Scan and import models into database
-    scan_and_import_models(app, conn, dt_base_dir, stash_dir)?;
+    // After copying, update the database to mark models as existing in stash
+    logger::log_info(app, "Updating stash model flags...".to_string());
+    update_stash_flags(app, conn, stash_dir)?;
 
     // Set STASH_EXISTS=true in config
     operations::set_config(conn, "STASH_EXISTS", "true")
@@ -173,17 +180,24 @@ fn transfer_model_files(app: &AppHandle, dt_base_dir: &Path, stash_dir: &Path) -
 /// Scan and import all models from both Mac HD and Stash into database
 fn scan_and_import_models(app: &AppHandle, conn: &Connection, dt_base_dir: &Path, stash_dir: &Path) -> Result<(), String> {
     logger::log_info(app, "Scanning models from Mac HD and Stash...".to_string());
-    
+
     let dt_models_dir = dt_base_dir.join("Models");
     let stash_models_dir = stash_dir.join("Models");
-    
+
+    // Parse DrawThings JSON configuration files from Mac HD
+    logger::log_info(app, "Parsing DrawThings JSON configuration files...".to_string());
+    let dt_config = DrawThingsConfig::parse_from_directory(&dt_models_dir)
+        .map_err(|e| format!("Failed to parse JSON config: {}", e))?;
+    logger::log_success(app, format!("✓ Parsed {} main models, {} LoRAs, {} ControlNets from JSON",
+        dt_config.models.len(), dt_config.loras.len(), dt_config.controlnets.len()));
+
     let mut total_imported = 0;
     let mut total_errors = 0;
-    
+
     // Scan Mac HD models
     if dt_models_dir.exists() {
         logger::log_info(app, format!("Scanning Mac HD: {}", dt_models_dir.display()));
-        match scan_directory_and_import(app, conn, &dt_models_dir, "Mac HD") {
+        match scan_directory_and_import(app, conn, &dt_models_dir, "Mac HD", &dt_config, true) {
             Ok((imported, errors)) => {
                 total_imported += imported;
                 total_errors += errors;
@@ -195,11 +209,11 @@ fn scan_and_import_models(app: &AppHandle, conn: &Connection, dt_base_dir: &Path
     } else {
         logger::log_warning(app, format!("Mac HD Models directory not found: {}", dt_models_dir.display()));
     }
-    
+
     // Scan Stash models
     if stash_models_dir.exists() {
         logger::log_info(app, format!("Scanning Stash: {}", stash_models_dir.display()));
-        match scan_directory_and_import(app, conn, &stash_models_dir, "Stash") {
+        match scan_directory_and_import(app, conn, &stash_models_dir, "Stash", &dt_config, false) {
             Ok((imported, errors)) => {
                 total_imported += imported;
                 total_errors += errors;
@@ -211,13 +225,58 @@ fn scan_and_import_models(app: &AppHandle, conn: &Connection, dt_base_dir: &Path
     } else {
         logger::log_warning(app, format!("Stash Models directory not found: {}", stash_models_dir.display()));
     }
-    
+
+    // Populate model relationships from JSON
+    // Only add relationships for files that actually exist in the database
+    logger::log_info(app, "Populating model relationships...".to_string());
+    let mut relationships_added = 0;
+    let mut relationships_skipped = 0;
+    for model in &dt_config.models {
+        // Check if parent model exists in database
+        let parent_exists = operations::get_model_by_filename(conn, &model.file)
+            .map(|m| m.is_some())
+            .unwrap_or(false);
+
+        if !parent_exists {
+            // Skip - model in JSON but file doesn't exist on disk
+            relationships_skipped += 1;
+            continue;
+        }
+
+        if let Some(encoders) = dt_config.get_model_encoders(&model.file) {
+            for encoder_file in encoders {
+                // Check if encoder exists in database
+                let encoder_exists = operations::get_model_by_filename(conn, &encoder_file)
+                    .map(|m| m.is_some())
+                    .unwrap_or(false);
+
+                if !encoder_exists {
+                    logger::log_warning(app, format!("Skipping relationship {} -> {}: encoder file not found",
+                        model.file, encoder_file));
+                    continue;
+                }
+
+                // Both parent and child exist, add relationship
+                if let Err(e) = operations::add_relationship(conn, &model.file, &encoder_file) {
+                    logger::log_warning(app, format!("Failed to add relationship {} -> {}: {}",
+                        model.file, encoder_file, e));
+                } else {
+                    relationships_added += 1;
+                }
+            }
+        }
+    }
+    if relationships_skipped > 0 {
+        logger::log_info(app, format!("  Skipped {} models in JSON that don't exist on disk", relationships_skipped));
+    }
+    logger::log_success(app, format!("✓ Added {} model relationships", relationships_added));
+
     if total_imported > 0 {
         logger::log_success(app, format!("✓ Imported {} models into database ({} errors)", total_imported, total_errors));
     } else {
         logger::log_warning(app, "⚠ No models found to import".to_string());
     }
-    
+
     Ok(())
 }
 
@@ -227,21 +286,23 @@ fn scan_directory_and_import(
     conn: &Connection,
     directory: &Path,
     location_name: &str,
+    dt_config: &DrawThingsConfig,
+    from_mac_hd: bool,
 ) -> Result<(usize, usize), String> {
     let entries = fs::read_dir(directory)
         .map_err(|e| format!("Failed to read {}: {}", location_name, e))?;
-    
+
     let mut imported_count = 0;
     let mut error_count = 0;
-    
+
     for entry in entries {
         let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
         let path = entry.path();
-        
+
         // Only import .ckpt files
         if let Some(ext) = path.extension() {
             if ext == "ckpt" {
-                match import_model_file(conn, &path) {
+                match import_model_file(conn, &path, dt_config, from_mac_hd) {
                     Ok(_) => {
                         imported_count += 1;
                         if imported_count % 10 == 0 {
@@ -256,87 +317,178 @@ fn scan_directory_and_import(
             }
         }
     }
-    
+
     Ok((imported_count, error_count))
 }
 
 /// Import a single model file into the database
-fn import_model_file(conn: &Connection, file_path: &Path) -> Result<(), String> {
+fn import_model_file(
+    conn: &Connection,
+    file_path: &Path,
+    dt_config: &DrawThingsConfig,
+    from_mac_hd: bool,
+) -> Result<(), String> {
     let filename = file_path
         .file_name()
         .ok_or("Invalid filename")?
         .to_string_lossy()
         .to_string();
-    
-    // Get file metadata
-    let file_size = file_ops::get_file_size(file_path)
-        .map_err(|e| format!("Failed to get file size: {}", e))?;
-    
-    // Skip checksum calculation for speed (can be calculated later if needed)
-    
-    // Determine model type from filename patterns
-    let model_type = determine_model_type(&filename);
-    
-    // Determine if file is from Mac HD or Stash based on path
-    let path_str = file_path.to_string_lossy().to_lowercase();
-    let from_mac_hd = path_str.contains("library/containers/com.liuliu.draw-things");
-    
+
     // Check if already exists
     if let Some(mut existing) = operations::get_model_by_filename(conn, &filename)
         .map_err(|e| e.to_string())?
     {
-        // Update location flags
+        // Update location flag and potentially update metadata from JSON
         if from_mac_hd {
             existing.exists_mac_hd = true;
+
+            // Update display order from JSON if available
+            if let Some(order) = dt_config.get_display_order(&filename) {
+                existing.mac_display_order = Some(order);
+            }
         } else {
             existing.exists_stash = true;
         }
-        operations::insert_or_update_model(conn, &existing)
-            .map_err(|e| format!("Failed to update model: {}", e))?;
+
+        // Update display name if available in JSON
+        if existing.display_name.is_none() {
+            if let Some(name) = dt_config.get_display_name(&filename) {
+                existing.display_name = Some(name);
+            }
+        }
+
+        // Update model type if available in JSON
+        if let Some(model_type) = dt_config.get_model_type(&filename) {
+            existing.model_type = model_type;
+        }
+
+        // Update LoRA strength if available in JSON
+        if existing.lora_strength.is_none() {
+            if let Some(strength) = dt_config.get_lora_strength(&filename) {
+                existing.lora_strength = Some(strength);
+            }
+        }
+
+        operations::insert_or_update_model(conn, &existing).map_err(|e| e.to_string())?;
         return Ok(());
     }
-    
-    // Create new model record
+
+    // Get file metadata
+    let file_size = file_ops::get_file_size(file_path)
+        .map_err(|e| e.to_string())?;
+
+    // Skip checksum for speed
+    let checksum = None;
+
+    // Get metadata from JSON or fallback to detection
+    let display_name = dt_config.get_display_name(&filename);
+    let model_type = dt_config.get_model_type(&filename)
+        .unwrap_or_else(|| determine_model_type(&filename));
+    let mac_display_order = if from_mac_hd {
+        dt_config.get_display_order(&filename)
+    } else {
+        None
+    };
+    let lora_strength = dt_config.get_lora_strength(&filename);
+
+    // Create model record
     let model = crate::db::models::CkptModel {
         filename: filename.clone(),
-        display_name: None,
+        display_name,
         model_type,
         file_size: Some(file_size as i64),
-        checksum: None, // Skip checksum for faster scanning
+        checksum,
         source_path: Some(file_path.to_string_lossy().to_string()),
         exists_mac_hd: from_mac_hd,
         exists_stash: !from_mac_hd,
-        mac_display_order: None,
-        lora_strength: None,
+        mac_display_order,
+        lora_strength,
         created_at: None,
         updated_at: None,
     };
-    
-    operations::insert_or_update_model(conn, &model)
-        .map_err(|e| format!("Failed to insert model: {}", e))
+
+    operations::insert_or_update_model(conn, &model).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 /// Determine model type from filename patterns
 fn determine_model_type(filename: &str) -> String {
     let lower = filename.to_lowercase();
-    
-    // Check for LoRA keywords
+
+    // LoRA models
     if lower.contains("lora") || lower.contains("lycoris") {
-        return "lora".to_string();
+        "lora".to_string()
     }
-    
-    // Check for ControlNet keywords
-    if lower.contains("controlnet") || lower.contains("control_net") || lower.contains("cn_") {
-        return "controlnet".to_string();
+    // ControlNet models
+    else if lower.contains("control") || lower.contains("t2i") {
+        "control".to_string()
     }
-    
-    // Check for VAE and CLIP (utility models)
-    if lower.contains("vae") || lower.contains("clip") {
-        return "model".to_string(); // Keep as main model type for now
+    // CLIP encoders (including vision transformers)
+    else if lower.contains("clip") || lower.contains("vit") || lower.contains("vision_model") {
+        "clip".to_string()
     }
-    
-    // Default to main model
-    "model".to_string()
+    // Text encoders
+    else if lower.contains("text_encoder") || lower.contains("t5") {
+        "text".to_string()
+    }
+    // VAE / Autoencoders
+    else if lower.contains("vae") || lower.contains("autoencoder") {
+        "vae".to_string()
+    }
+    // Face restoration models
+    else if lower.contains("face") || lower.contains("gfpgan") || lower.contains("restoreformer") {
+        "face_restorer".to_string()
+    }
+    // Upscaler models
+    else if lower.contains("upscale") || lower.contains("esrgan") || lower.contains("realesrgan") {
+        "upscaler".to_string()
+    }
+    // Files not in JSON and not matching patterns - mark as unknown
+    else {
+        "unknown".to_string()
+    }
+}
+
+/// Update database to mark models as existing in stash after files are copied
+fn update_stash_flags(app: &AppHandle, conn: &Connection, stash_dir: &Path) -> Result<(), String> {
+    let stash_models_dir = stash_dir.join("Models");
+
+    if !stash_models_dir.exists() {
+        return Ok(());
+    }
+
+    let entries = fs::read_dir(&stash_models_dir)
+        .map_err(|e| format!("Failed to read stash Models directory: {}", e))?;
+
+    let mut updated_count = 0;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
+        let path = entry.path();
+
+        // Only process .ckpt files
+        if path.extension().and_then(|s| s.to_str()) == Some("ckpt") {
+            if let Some(filename) = path.file_name() {
+                let filename_str = filename.to_string_lossy().to_string();
+
+                // Update the model to mark it as existing in stash
+                if let Ok(Some(mut model)) = operations::get_model_by_filename(conn, &filename_str) {
+                    if !model.exists_stash {
+                        model.exists_stash = true;
+                        if let Ok(_) = operations::insert_or_update_model(conn, &model) {
+                            updated_count += 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if updated_count > 0 {
+        logger::log_success(app, format!("✓ Updated {} models as existing in stash", updated_count));
+    }
+
+    Ok(())
 }
 
 /// Copy all JSON config files from DT_BASE_DIR/Models to STASH_DIR/Models
