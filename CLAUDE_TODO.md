@@ -20,6 +20,12 @@ The application has been refactored from a backend-heavy Rust architecture to a 
 - [x] Removed redundant backend calls (`get_app_paths`, old `initialize_app`)
 - [x] Renamed functions for consistency (`app_*` pattern)
 - [x] Updated SettingsView to display .env values and allow stash directory changes
+- [x] Added SQLite database documentation to CLAUDE_NOTES.md
+- [x] Implemented `get_models()` function using SQLite database
+- [x] Updated frontend to read from database (useModels.js, TwoPaneManager.jsx)
+- [x] Updated database schema to use display_name_original and display_name fields
+- [x] Cleaned up deprecated documentation (removed 7 outdated files from _documentation/)
+- [x] Added documentation guidelines to CLAUDE_NOTES.md
 
 ---
 
@@ -28,28 +34,19 @@ The application has been refactored from a backend-heavy Rust architecture to a 
 ### **High Priority**
 
 1. **Implement Model Management (Frontend Logic)**
-   - [ ] `get_models()` - Read from database, return model list with Mac/Stash status
-   - [ ] `add_model_to_mac()` - Update database record, don't move files yet
-   - [ ] `remove_model_from_mac()` - Update database record, don't move files yet
-   - [ ] `update_models_order()` - Update display_order in database
-   - [ ] `delete_model()` - Delete from database, optionally delete files
+   - [x] 1.1) `get_models()` - Reads models from SQLite database, filters by type, returns with Mac/Stash status
+   - [ ] 1.2) `add_model_to_mac()` - Update database record (set exists_mac_hd=true, mac_display_order)
+   - [ ] 1.3) `remove_model_from_mac()` - Update database record (set exists_mac_hd=false, mac_display_order=null)
+   - [ ] 1.4) `update_models_order()` - Update mac_display_order in database for multiple models
+   - [ ] 1.5) `delete_model()` - Delete from database, optionally delete files
 
-2. **Implement Model Scanning**
-   - [ ] `scan_mac_models()` - Scan DrawThings directory, import to database
-   - [ ] File checksum calculation (SHA256)
-   - [ ] Detect model type from file extension/metadata
-   - [ ] Handle duplicates gracefully
+2. **Frontend Integration with Database**
+   - [x] 2.1) Updated `useModels.js` hook to work with new flat database structure
+   - [x] 2.2) Updated `TwoPaneManager.jsx` to display models from database
+   - [x] 2.3) Updated model property references (filename, display_name, exists_mac_hd, mac_display_order)
+   - [x] 2.4) Fixed LoRA strength display (divide by 10 for actual value)
 
-3. **Database Operations**
-   - [ ] Design/review database schema for models
-   - [ ] Implement SQLite queries in frontend
-   - [ ] Use `@tauri-apps/plugin-sql` for database access
-   - [ ] Consider using existing `drawthings_companion.sqlite` or create new schema
 
-4. **Logging System**
-   - [ ] `get_all_logs()` - Read logs from log file or database
-   - [ ] Implement log event emission from frontend
-   - [ ] Connect LogViewer to display real-time logs
 
 ### **Medium Priority**
 

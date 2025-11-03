@@ -60,7 +60,7 @@ export default function TwoPaneManager({
 
   // Check if model is in Mac pane
   const isOnMac = (modelId) => {
-    return macModels.some(m => m.model.id === modelId);
+    return macModels.some(m => m.filename === modelId);
   };
 
   // Handle delete confirmation
@@ -76,7 +76,7 @@ export default function TwoPaneManager({
 
     try {
       setDeleting(true);
-      await TauriHandler.delete_model(modelToDelete.model.id, deleteFiles);
+      await TauriHandler.delete_model(modelToDelete.filename, deleteFiles);
 
       // Close confirmation dialog
       setShowDeleteConfirm(false);
@@ -140,7 +140,7 @@ export default function TwoPaneManager({
             ) : (
               macModels.map((item, index) => (
                 <div
-                  key={item.model.id}
+                  key={item.filename}
                   className={`flex items-center gap-3 px-4 py-2 bg-white border border-gray-250 rounded-md mb-2 transition-all hover:border-brand hover:shadow-elevation-sm ${saving ? 'cursor-not-allowed opacity-60' : 'cursor-grab active:cursor-grabbing'}`}
                   onDoubleClick={() => handleModelClick(item)}
                   data-drag-disabled={saving}
@@ -150,13 +150,13 @@ export default function TwoPaneManager({
                   </div>
                   <div className="flex-1">
                     <div className="text-md font-semibold mb-1 break-words">
-                      {item.custom_name || item.model.display_name || item.model.id}
+                      {item.display_name || item.display_name_original || item.filename}
                     </div>
                     <div className="text-sm text-gray-700 flex gap-3">
-                      {formatFileSize(item.model.file_size)}
+                      {formatFileSize(item.file_size)}
                       {item.lora_strength && (
                         <span className="text-brand font-semibold">
-                          Strength: {item.lora_strength}
+                          Strength: {(item.lora_strength / 10).toFixed(1)}
                         </span>
                       )}
                     </div>
@@ -165,7 +165,7 @@ export default function TwoPaneManager({
                     className="bg-transparent border border-gray-250 rounded-sm p-1.5 cursor-pointer transition-all text-gray-700 hover:bg-error-light hover:border-error-dark hover:text-error-dark disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-250 disabled:hover:text-gray-700"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onRemoveFromMac(item.model.id);
+                      onRemoveFromMac(item.filename);
                     }}
                     disabled={saving}
                     title="Remove from Mac"
@@ -194,10 +194,10 @@ export default function TwoPaneManager({
               </div>
             ) : (
               stashModels.map((item) => {
-                const onMac = isOnMac(item.model.id);
+                const onMac = isOnMac(item.filename);
                 return (
                   <div
-                    key={item.model.id}
+                    key={item.filename}
                     className={`
                       flex items-center gap-3 px-4 py-2 bg-white border border-gray-250 rounded-md mb-2 transition-all
                       hover:border-brand hover:shadow-elevation-sm
@@ -207,16 +207,16 @@ export default function TwoPaneManager({
                     onDoubleClick={() => handleModelClick(item)}
                     onClick={() => {
                       if (!onMac && !saving) {
-                        onAddToMac(item.model.id);
+                        onAddToMac(item.filename);
                       }
                     }}
                   >
                     <div className="flex-1">
                       <div className="text-md font-semibold mb-1 break-words">
-                        {item.model.display_name || item.model.id}
+                        {item.display_name || item.display_name_original || item.filename}
                       </div>
                       <div className="text-sm text-gray-700">
-                        {formatFileSize(item.model.file_size)}
+                        {formatFileSize(item.file_size)}
                       </div>
                     </div>
                     {onMac && (
@@ -265,26 +265,44 @@ export default function TwoPaneManager({
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <span className="font-bold text-gray-700">Filename:</span>
-                <span className="text-gray-800 break-all">{selectedModel.model.id}</span>
+                <span className="text-gray-800 break-all">{selectedModel.filename}</span>
               </div>
+              {selectedModel.display_name && (
+                <div className="grid grid-cols-[120px_1fr] gap-4">
+                  <span className="font-bold text-gray-700">Custom Name:</span>
+                  <span className="text-gray-800 break-all">{selectedModel.display_name}</span>
+                </div>
+              )}
+              {selectedModel.display_name_original && (
+                <div className="grid grid-cols-[120px_1fr] gap-4">
+                  <span className="font-bold text-gray-700">Original Name:</span>
+                  <span className="text-gray-800 break-all">{selectedModel.display_name_original}</span>
+                </div>
+              )}
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <span className="font-bold text-gray-700">Type:</span>
-                <span className="text-gray-800 break-all">{selectedModel.model.model_type}</span>
+                <span className="text-gray-800 break-all">{selectedModel.model_type}</span>
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <span className="font-bold text-gray-700">Size:</span>
-                <span className="text-gray-800 break-all">{formatFileSize(selectedModel.model.file_size)}</span>
+                <span className="text-gray-800 break-all">{formatFileSize(selectedModel.file_size)}</span>
               </div>
-              {selectedModel.model.checksum && (
+              {selectedModel.checksum && (
                 <div className="grid grid-cols-[120px_1fr] gap-4">
                   <span className="font-bold text-gray-700">Checksum:</span>
-                  <span className="text-gray-800 break-all font-mono text-xs">{selectedModel.model.checksum}</span>
+                  <span className="text-gray-800 break-all font-mono text-xs">{selectedModel.checksum}</span>
                 </div>
               )}
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <span className="font-bold text-gray-700">On Mac HD:</span>
-                <span className="text-gray-800 break-all">{selectedModel.is_on_mac ? 'Yes' : 'No'}</span>
+                <span className="text-gray-800 break-all">{selectedModel.exists_mac_hd ? 'Yes' : 'No'}</span>
               </div>
+              {selectedModel.lora_strength && (
+                <div className="grid grid-cols-[120px_1fr] gap-4">
+                  <span className="font-bold text-gray-700">LoRA Strength:</span>
+                  <span className="text-gray-800 break-all">{(selectedModel.lora_strength / 10).toFixed(1)}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -309,10 +327,10 @@ export default function TwoPaneManager({
 
             <div className="mb-6">
               <p className="text-gray-700 mb-4">
-                Are you sure you want to delete <strong>{modelToDelete.model.id}</strong>?
+                Are you sure you want to delete <strong>{modelToDelete.filename}</strong>?
               </p>
               <p className="text-sm text-gray-600 mb-4">
-                This will remove the model from the database{modelToDelete.is_on_mac ? ' and from Mac HD' : ''}.
+                This will remove the model from the database{modelToDelete.exists_mac_hd ? ' and from Mac HD' : ''}.
               </p>
 
               <label className="flex items-center gap-2 cursor-pointer">

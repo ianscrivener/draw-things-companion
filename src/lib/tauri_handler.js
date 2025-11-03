@@ -14,6 +14,95 @@ import { invoke } from '@tauri-apps/api/core';
 // ############################################################################
 // ############################################################################
 // ============================================================================
+// DATABASE INITIALIZATION
+// ============================================================================
+
+// ############################################################################
+/**
+ * init_database
+ *
+ * Creates the SQLite database and tables if they don't exist.
+ * Should be called during app initialization.
+ *
+ * @param {string} stashDir - Path to stash directory
+ * @returns {Promise<void>}
+ */
+export async function init_database(stashDir) {
+  try {
+    console.log('[tauri_handler] init_database - starting');
+
+    const Database = (await import('@tauri-apps/plugin-sql')).default;
+    const { join } = await import('@tauri-apps/api/path');
+    const { exists, mkdir } = await import('@tauri-apps/plugin-fs');
+
+    // Ensure App_Data directory exists
+    const appDataDir = await join(stashDir, 'App_Data');
+    const appDataExists = await exists(appDataDir);
+    if (!appDataExists) {
+      console.log('[tauri_handler] Creating App_Data directory:', appDataDir);
+      await mkdir(appDataDir, { recursive: true });
+    }
+
+    // Open/create database
+    const dbPath = await join(stashDir, 'App_Data', 'drawthings_companion.sqlite');
+    console.log('[tauri_handler] Opening database at:', dbPath);
+    const db = await Database.load(`sqlite:${dbPath}`);
+
+    // Create ckpt_models table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS ckpt_models (
+        filename TEXT PRIMARY KEY NOT NULL,
+        display_name_original TEXT,
+        display_name TEXT,
+        model_type TEXT NOT NULL,
+        file_size INTEGER,
+        checksum TEXT,
+        source_path TEXT,
+        exists_mac_hd BOOLEAN DEFAULT FALSE,
+        exists_stash BOOLEAN DEFAULT FALSE,
+        mac_display_order INTEGER,
+        lora_strength INTEGER,
+        created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP),
+        updated_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
+      )
+    `);
+
+    // Create ckpt_x_ckpt table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS ckpt_x_ckpt (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parent_ckpt_filename TEXT NOT NULL,
+        child_ckpt_filename TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP),
+        UNIQUE(parent_ckpt_filename, child_ckpt_filename),
+        FOREIGN KEY (parent_ckpt_filename) REFERENCES ckpt_models(filename) ON DELETE CASCADE,
+        FOREIGN KEY (child_ckpt_filename) REFERENCES ckpt_models(filename) ON DELETE CASCADE
+      )
+    `);
+
+    // Create config table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS config (
+        key TEXT PRIMARY KEY NOT NULL,
+        value TEXT,
+        updated_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
+      )
+    `);
+
+    await db.close();
+
+    console.log('[tauri_handler] init_database - completed successfully');
+
+  } catch (error) {
+    console.error('[tauri_handler] init_database error:', error);
+    throw error;
+  }
+}
+
+
+// ############################################################################
+// ############################################################################
+// ============================================================================
 // MODEL MANAGEMENT
 // ============================================================================
 
@@ -24,25 +113,80 @@ import { invoke } from '@tauri-apps/api/core';
  *
  * Retrieves all models of a specific type with their Mac HD status and display order.
  *
- * @param {string} modelType - Type of model: 'model', 'lora', or 'controlnet'
+ * @param {string} modelType - Type of model: 'model', 'lora', or 'control'
  * @returns {Promise<Array>} Array of model objects with structure:
  *   [{
- *     model: {
- *       id: string,              // Filename
- *       display_name: string,    // Display name
- *       model_type: string,      // Type (model/lora/controlnet)
- *       file_size: number,       // Size in bytes
- *       checksum: string         // SHA256 hash
- *     },
- *     is_on_mac: boolean,        // Whether model is on Mac HD
- *     display_order: number|null, // Order on Mac (null if not on Mac)
- *     custom_name: string|null,  // Custom name set by user
- *     lora_strength: number|null // LoRA strength if applicable
+ *     filename: string,                  // Primary key - actual file name
+ *     display_name_original: string|null, // Original name from DrawThings JSON
+ *     display_name: string|null,         // User's custom display name (editable)
+ *     model_type: string,                // Type (model/lora/control/etc)
+ *     file_size: number|null,            // Size in bytes
+ *     checksum: string|null,             // SHA256 hash
+ *     source_path: string|null,          // Original file path
+ *     exists_mac_hd: boolean,            // Whether model is on Mac HD
+ *     exists_stash: boolean,             // Whether model is in Stash
+ *     mac_display_order: number|null,    // Order on Mac (null if not on Mac)
+ *     lora_strength: number|null,        // LoRA strength × 10 (e.g., 75 = 7.5)
+ *     created_at: string,                // ISO timestamp
+ *     updated_at: string                 // ISO timestamp
  *   }]
  */
 export async function get_models(modelType) {
   try {
-    return await invoke('get_models', { modelType });
+    console.log('[tauri_handler] get_models - starting for type:', modelType);
+
+    // Load config to get STASH_DIR
+    const config = await app_init();
+
+    if (!config.STASH_DIR) {
+      console.error('[tauri_handler] get_models - STASH_DIR not configured');
+      return [];
+    }
+
+    // Import Database dynamically
+    const Database = (await import('@tauri-apps/plugin-sql')).default;
+    const { join } = await import('@tauri-apps/api/path');
+
+    // Open database connection
+    const dbPath = await join(config.STASH_DIR, 'App_Data', 'drawthings_companion.sqlite');
+    console.log('[tauri_handler] get_models - opening database at:', dbPath);
+
+    const db = await Database.load(`sqlite:${dbPath}`);
+
+    // Query models of specified type, ordered by mac_display_order (nulls last)
+    // Display logic: prefer display_name (custom), fallback to display_name_original, then filename
+    const query = `
+      SELECT
+        filename,
+        display_name_original,
+        display_name,
+        model_type,
+        file_size,
+        checksum,
+        source_path,
+        exists_mac_hd,
+        exists_stash,
+        mac_display_order,
+        lora_strength,
+        created_at,
+        updated_at
+      FROM ckpt_models
+      WHERE model_type = $1
+      ORDER BY
+        CASE WHEN mac_display_order IS NULL THEN 1 ELSE 0 END,
+        mac_display_order,
+        COALESCE(display_name, display_name_original, filename)
+    `;
+
+    const models = await db.select(query, [modelType]);
+
+    // Close database connection
+    await db.close();
+
+    console.log('[tauri_handler] get_models - found', models.length, 'models of type', modelType);
+
+    return models;
+
   } catch (error) {
     console.error('[tauri_handler] get_models error:', error);
     // Return empty array to prevent crashes
@@ -280,6 +424,15 @@ export async function app_init() {
       console.warn('[tauri_handler] Missing required config keys:', missingKeys);
     }
 
+    // Initialize database if STASH_DIR is configured and app is initialized
+    if (config.STASH_DIR && config.initialized) {
+      try {
+        await init_database(config.STASH_DIR);
+      } catch (dbError) {
+        console.warn('[tauri_handler] Database initialization warning (may already exist):', dbError.message);
+      }
+    }
+
     return config;
 
   } catch (error) {
@@ -415,7 +568,7 @@ export async function get_config_value(key) {
 /**
  * app_first_run
  *
- * First-run setup: creates stash directory and saves initial configuration.
+ * First-run setup: creates stash directory, saves initial configuration, and initializes database.
  * This is frontend-only logic - no backend call needed.
  *
  * @param {string} dtBaseDir - DrawThings base directory path
@@ -435,6 +588,10 @@ export async function app_first_run(dtBaseDir, stashDir) {
     };
 
     await save_settings(settings);
+
+    // Initialize database
+    console.log('[tauri_handler] app_first_run - initializing database');
+    await init_database(stashDir);
 
     console.log('[tauri_handler] app_first_run completed successfully');
   } catch (error) {

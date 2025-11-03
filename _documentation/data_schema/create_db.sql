@@ -4,22 +4,23 @@ DROP TABLE IF EXISTS ckpt_models;
 
 CREATE TABLE ckpt_models (
     filename TEXT PRIMARY KEY NOT NULL,
-    display_name TEXT,
+    display_name_original TEXT,  -- Original display name from DrawThings JSON (read-only reference)
+    display_name TEXT,  -- User's custom display name (editable, nullable)
     model_type TEXT NOT NULL,  -- model, lora, control, clip, text, face_restorer, upscaler, unknown
     file_size INTEGER,
     checksum TEXT,  -- nullable, for future integrity verification
     source_path TEXT,
-    
+
     -- Location tracking
     exists_mac_hd BOOLEAN DEFAULT FALSE,
     exists_stash BOOLEAN DEFAULT FALSE,
-    
+
     -- Mac HD display ordering (Stash is alphabetical, no order needed)
     mac_display_order INTEGER,
-    
+
     -- LoRA specific (nullable for other types)
     lora_strength INTEGER,  -- value × 10 (e.g., 75 = 7.5 strength)
-    
+
     -- Timestamps
     created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP),
     updated_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)

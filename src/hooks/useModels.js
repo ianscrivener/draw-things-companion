@@ -27,13 +27,19 @@ export function useModels(modelType) {
       console.log(`[useModels] Loaded ${allModels.length} ${modelType} models:`, allModels);
 
       // Separate into Mac and Stash lists
+      // Database structure: exists_mac_hd, mac_display_order, filename
       const mac = allModels
-        .filter(m => m.is_on_mac)
-        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        .filter(m => m.exists_mac_hd)
+        .sort((a, b) => (a.mac_display_order || 0) - (b.mac_display_order || 0));
 
       const stash = allModels
-        .filter(m => !m.is_on_mac)
-        .sort((a, b) => (a.model.id || '').localeCompare(b.model.id || ''));
+        .filter(m => !m.exists_mac_hd)
+        .sort((a, b) => {
+          // Sort by display_name (custom) > display_name_original > filename
+          const aName = a.display_name || a.display_name_original || a.filename || '';
+          const bName = b.display_name || b.display_name_original || b.filename || '';
+          return aName.localeCompare(bName);
+        });
 
       console.log(`[useModels] Mac: ${mac.length}, Stash: ${stash.length}`);
 
@@ -55,15 +61,15 @@ export function useModels(modelType) {
 
   // Add model to Mac HD pane
   const addToMac = useCallback((modelId) => {
-    const model = stashModels.find(m => m.model.id === modelId);
+    const model = stashModels.find(m => m.filename === modelId);
     if (!model) return;
 
     const newOrder = macModels.length;
-    const updatedModel = { ...model, display_order: newOrder, is_on_mac: true };
+    const updatedModel = { ...model, mac_display_order: newOrder, exists_mac_hd: true };
 
     setMacModels(prev => [...prev, updatedModel]);
     setStashModels(prev => prev.map(m =>
-      m.model.id === modelId ? updatedModel : m
+      m.filename === modelId ? updatedModel : m
     ));
 
     // Deduplicate: remove any previous actions for this model, then add new action
@@ -76,14 +82,14 @@ export function useModels(modelType) {
 
   // Remove model from Mac HD pane
   const removeFromMac = useCallback((modelId) => {
-    const model = macModels.find(m => m.model.id === modelId);
+    const model = macModels.find(m => m.filename === modelId);
     if (!model) return;
 
-    const updatedModel = { ...model, display_order: null, is_on_mac: false };
+    const updatedModel = { ...model, mac_display_order: null, exists_mac_hd: false };
 
-    setMacModels(prev => prev.filter(m => m.model.id !== modelId));
+    setMacModels(prev => prev.filter(m => m.filename !== modelId));
     setStashModels(prev => prev.map(m =>
-      m.model.id === modelId ? updatedModel : m
+      m.filename === modelId ? updatedModel : m
     ));
 
     // Deduplicate: remove any previous actions for this model, then add new action
@@ -98,7 +104,7 @@ export function useModels(modelType) {
   const reorderMac = useCallback((newOrder) => {
     const updatedModels = newOrder.map((model, index) => ({
       ...model,
-      display_order: index,
+      mac_display_order: index,
     }));
 
     setMacModels(updatedModels);
@@ -133,7 +139,7 @@ export function useModels(modelType) {
       }
 
       // Update order for all mac models from snapshot
-      const orderUpdates = macModelsSnapshot.map(m => [m.model.id, m.display_order]);
+      const orderUpdates = macModelsSnapshot.map(m => [m.filename, m.mac_display_order]);
       if (orderUpdates.length > 0) {
         await TauriHandler.update_models_order(orderUpdates);
       }

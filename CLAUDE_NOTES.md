@@ -41,6 +41,26 @@
 
 ---
 
+## 🔬 Testing & Development
+
+### **CRITICAL: This is a Tauri-Only Application**
+
+⚠️ **NEVER run this app as a web app with `npm run dev`**
+⚠️ **ALWAYS use `npm run tauri dev` for development**
+
+**Why?**
+- This application uses Tauri APIs (`@tauri-apps/plugin-fs`, `@tauri-apps/plugin-sql`) that do NOT work in browsers
+- The app requires native file system access and SQLite database access
+- Running in browser mode will cause runtime errors and incorrect behavior
+
+### Testing Protocol
+- ✅ Claude Code CANNOT test the application directly
+- ✅ ALL testing must be done by Ian using `npm run tauri dev`
+- ✅ Claude should write code and explain expected behavior
+- ✅ Ian will test and report any issues
+
+---
+
 ## 📁 Directory Structure
 
 ### Key Directories
@@ -121,6 +141,97 @@ DTC_APP_DIR=~/.drawthings_companion
 ```
 
 **Function:** `app_init()` in `tauri_handler.js`
+
+---
+
+## 💾 Database
+
+### SQLite Storage
+
+**Database Location:** `[STASH_DIR]/App_Data/drawthings_companion.sqlite`
+
+**Schema:** See `_documentation/data_schema/create_db.sql`
+
+### ⚠️ **CRITICAL: Database Schema Changes**
+
+**NEVER make database schema changes without prior approval!**
+
+**Required Process:**
+1. ✅ Identify the need for a schema change
+2. ✅ Write a brief rationale explaining WHY the change is needed
+3. ✅ Present the proposed change to Ian for approval
+4. ✅ Wait for explicit approval before implementing
+5. ❌ NEVER proceed with schema changes unilaterally
+
+**Why?**
+- Database schema changes can break existing data
+- Migration strategies may be needed for existing databases
+- Ian needs to understand the implications before changes are made
+- Schema should remain stable unless absolutely necessary
+
+### Main Tables
+
+**1. ckpt_models**
+- Primary table for all model files
+- `filename` (PRIMARY KEY) - The actual file name (unique identifier)
+- `display_name_original` - Original display name from DrawThings JSON (read-only reference)
+- `display_name` - User's custom display name (editable, nullable)
+  - **Display Logic:** Show `display_name` if set, else `display_name_original`, else `filename`
+- `model_type` - Type: model, lora, control, clip, text, face_restorer, upscaler, unknown
+- `file_size` - Size in bytes
+- `checksum` - SHA hash for integrity (nullable)
+- `source_path` - Original file path
+- Location tracking:
+  - `exists_mac_hd` (BOOLEAN) - Currently on Mac HD
+  - `exists_stash` (BOOLEAN) - Currently in Stash
+- `mac_display_order` (INTEGER) - Display position on Mac HD (null if not on Mac)
+- `lora_strength` (INTEGER) - LoRA strength × 10 (e.g., 75 = 7.5), nullable
+- Timestamps: `created_at`, `updated_at`
+
+**2. ckpt_x_ckpt**
+- Relationships between models (e.g., main model → CLIP/text encoders)
+- `parent_ckpt_filename` - Parent model filename
+- `child_ckpt_filename` - Child model filename
+
+**3. config**
+- App configuration key-value store
+- `key` (PRIMARY KEY)
+- `value`
+- `updated_at`
+
+### Database Access
+
+Using `@tauri-apps/plugin-sql` from frontend JavaScript:
+
+```javascript
+import Database from '@tauri-apps/plugin-sql';
+
+// Open database
+const db = await Database.load(`sqlite:${stashDir}/App_Data/drawthings_companion.sqlite`);
+
+// Query
+const rows = await db.select('SELECT * FROM ckpt_models WHERE model_type = $1', [modelType]);
+
+// Execute
+await db.execute('UPDATE ckpt_models SET display_name = $1 WHERE filename = $2', [name, filename]);
+
+// Always close when done
+await db.close();
+```
+
+⚠️ **IMPORTANT:** Database is stored in STASH_DIR, not DTC_APP_DIR, to ensure data persists with the stashed models.
+
+### Database Initialization
+
+The database is automatically created during:
+1. **First run** - `app_first_run()` calls `init_database()`
+2. **Every app launch** - `app_init()` ensures database exists
+
+The `init_database()` function:
+- Creates `App_Data` directory if needed
+- Creates database file if it doesn't exist
+- Creates all tables using `CREATE TABLE IF NOT EXISTS`
+- Safe to call multiple times (idempotent)
 
 ---
 
@@ -229,6 +340,11 @@ Configured in `src-tauri/capabilities/default.json`:
 4. **DO NOT modify .env file** - read-only config, use settings.json for changes
 5. **DO NOT create new backend invoke() calls** - use existing Tauri plugins directly
 6. **DO NOT trust old backend code in `_src-tauri-old/`** - it's broken, reference only
+7. **DO NOT run `npm run dev`** - ALWAYS use `npm run tauri dev` (Tauri APIs required)
+8. **DO NOT test the app yourself** - you cannot run Tauri, Ian must test all changes
+9. **DO NOT change database schema** - always get Ian's approval first with rationale
+10. **DO NOT assume web app compatibility** - this is a desktop-only Tauri application
+11. **DO NOT document deprecated functionality** - delete old docs, keep documentation lean and current
 
 ---
 
@@ -241,6 +357,14 @@ Configured in `src-tauri/capabilities/default.json`:
 3. **Add to tauri_handler.js** - if it needs centralized access
 4. **Update CLAUDE_TODO.md** - track progress
 5. **Test in Tauri mode** - `npm run tauri dev` (NOT `npm run dev`)
+
+### Documentation Guidelines
+
+1. **Keep documentation lean** - only document current, active functionality
+2. **Delete deprecated docs** - don't mark as deprecated, just remove them
+3. **Update docs immediately** - when code changes, update docs in the same session
+4. **No historical references** - documentation should reflect current state only
+5. **Focus on clarity** - explain WHY, not just WHAT
 
 ### Function Naming Conventions
 
@@ -340,9 +464,16 @@ npm run dev  # Browser mode - Tauri APIs won't work!
 1. **Ian cannot code Rust** - all logic must be JavaScript
 2. **Old backend is broken** - don't reference it for logic, only for understanding what was attempted
 3. **Two-location settings** - always save to both DTC_APP_DIR and STASH_DIR/App_Data
-4. **Tauri-only app** - no browser support needed
+4. **Tauri-only app** - no browser support needed, NEVER run as web app
 5. **Frontend-first** - React hooks + Tauri plugins = complete solution
+6. **You cannot test** - Ian must test all changes using `npm run tauri dev`
+7. **Database schema is sacred** - always get approval with rationale before any schema changes
+8. **SQLite database** - located at `[STASH_DIR]/App_Data/drawthings_companion.sqlite`
 
 ---
 
-**Remember:** When in doubt, put logic in JavaScript, not Rust!
+**Remember:**
+- When in doubt, put logic in JavaScript, not Rust!
+- Never test as web app - Tauri APIs will fail!
+- Never change database schema without Ian's approval!
+- Keep documentation lean - delete deprecated docs, don't archive them!
