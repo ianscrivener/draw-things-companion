@@ -16,7 +16,7 @@
     "@tauri-apps/plugin-fs": "^2.4.2",
     "@tauri-apps/plugin-shell": "^2.3.1",
     "@tauri-apps/plugin-sql": "^2.3.0",
-    "execa": "^9.6.0",
+    "hyparquet": "^1.20.1",
     "lucide-react": "^0.546.0",
     "next": "14.2.3",
     "react": "^18",

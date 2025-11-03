@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+_src-tauri-old/
+
+
 # dependencies
 src/node_modules
 /node_modules
