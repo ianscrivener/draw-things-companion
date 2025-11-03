@@ -42,7 +42,22 @@
         { "path": "/Volumes/**" }
       ]
     },
-    "fs:allow-read-dir",
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [
+        { "path": "$HOME/.drawthings_companion/**" },
+        { "path": "$HOME/Library/Containers/com.liuliu.draw-things/**" },
+        { "path": "/Volumes/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-stat",
+      "allow": [
+        { "path": "$HOME/.drawthings_companion/**" },
+        { "path": "$HOME/Library/Containers/com.liuliu.draw-things/**" },
+        { "path": "/Volumes/**" }
+      ]
+    },
     "opener:default",
     "sql:default",
     "sql:allow-load",

@@ -223,15 +223,16 @@ await db.close();
 
 ### Database Initialization
 
-The database is automatically created during:
-1. **First run** - `app_first_run()` calls `init_database()`
-2. **Every app launch** - `app_init()` ensures database exists
+The database is created during first run only:
+- **First run** - `app_first_run()` calls `init_database()`
 
 The `init_database()` function:
 - Creates `App_Data` directory if needed
 - Creates database file if it doesn't exist
 - Creates all tables using `CREATE TABLE IF NOT EXISTS`
 - Safe to call multiple times (idempotent)
+
+**Note:** On subsequent app launches, the database already exists and is simply opened by functions like `get_models()` and `scan_mac_models()`.
 
 ---
 
@@ -472,8 +473,74 @@ npm run dev  # Browser mode - Tauri APIs won't work!
 
 ---
 
+## 🐛 Critical Bug Fix - Model Type Categorization (2025-11-03)
+
+### The Problem
+Initial implementation of `scan_mac_models()` was scanning ALL .ckpt files in the Models directory and tagging them with whatever `modelType` parameter was passed in. This meant:
+- When called with `scan_mac_models('model')`, it tagged ALL .ckpt files as 'model'
+- When called with `scan_mac_models('lora')`, it would try to tag ALL .ckpt files as 'lora'
+- Result: Database was filled with incorrect model types
+
+### The Root Cause
+The function was:
+1. Listing all .ckpt files in the directory
+2. Importing them all with the passed-in model type
+3. NOT consulting the JSON files to determine which files belong to which type
+
+### The Solution
+Complete rewrite of `scan_mac_models()` logic:
+1. **Read JSON file FIRST** - `custom.json`, `custom_lora.json`, or `custom_controlnet.json`
+2. **Extract filenames from JSON** - only process files listed in that specific JSON
+3. **Import only those files** - with the correct model type
+4. **Use JSON array position** - as the `mac_display_order` for display ordering
+
+### The Fix (src/lib/tauri_handler.js:306-460)
+```javascript
+// Map model type to JSON filename
+const jsonFilenames = {
+  'model': 'custom.json',
+  'lora': 'custom_lora.json',
+  'control': 'custom_controlnet.json'
+};
+
+// Read DrawThings JSON file FIRST
+const jsonPath = await join(config.DT_BASE_DIR, 'Models', jsonFilename);
+const jsonContent = await readTextFile(jsonPath);
+const jsonData = JSON.parse(jsonContent);
+
+// Extract filenames from JSON - these are the ONLY files for this type
+const filesToImport = [];
+for (let i = 0; i < jsonData.length; i++) {
+  const entry = jsonData[i];
+  if (entry.file) {
+    filesToImport.push({
+      filename: entry.file,
+      jsonEntry: entry,
+      order: i  // Use position as display order
+    });
+  }
+}
+
+// Process ONLY the files listed in the JSON
+for (const fileInfo of filesToImport) {
+  // Insert with correct model type
+}
+```
+
+### Verification
+After fix:
+- ✅ Main models displaying correctly in ModelsView
+- ✅ LoRAs displaying correctly in LoRAsView
+- ✅ ControlNets displaying correctly in ControlNetsView
+- ✅ Each model type properly categorized in database
+
+**Lesson Learned:** Always trust the DrawThings JSON files as the source of truth for model categorization, not file extensions.
+
+---
+
 **Remember:**
 - When in doubt, put logic in JavaScript, not Rust!
 - Never test as web app - Tauri APIs will fail!
 - Never change database schema without Ian's approval!
 - Keep documentation lean - delete deprecated docs, don't archive them!
+- **Always consult DrawThings JSON files for model metadata and categorization**

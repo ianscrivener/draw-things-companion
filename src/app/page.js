@@ -16,7 +16,7 @@ import SettingsView from '@/components/views/SettingsView';
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState('models');
-  const { initialized, loading, needsSetup, initializeApp } = useAppInitialization();
+  const { initialized, loading, needsSetup, config, initializeApp } = useAppInitialization();
 
   const handleNavigate = (section) => {
     setActiveSection(section);
@@ -36,7 +36,7 @@ export default function Home() {
 
   // Show setup wizard if app needs first-run setup
   if (needsSetup) {
-    return <SetupWizard onComplete={initializeApp} />;
+    return <SetupWizard config={config} onComplete={initializeApp} />;
   }
 
   const renderView = () => {

@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { FolderOpen, HardDrive } from 'lucide-react';
 
-export default function SetupWizard({ onComplete }) {
+export default function SetupWizard({ config, onComplete }) {
   const [dtBaseDir, setDtBaseDir] = useState(
-    '~/Library/Containers/com.liuliu.draw-things/Data/Documents'
+    config?.DT_BASE_DIR || '/Users/YOUR_USERNAME/Library/Containers/com.liuliu.draw-things/Data/Documents'
   );
-  const [stashDir, setStashDir] = useState('~/DrawThings_Stash');
+  const [stashDir, setStashDir] = useState(
+    config?.STASH_DIR || '/Volumes/Extreme2Tb/__DrawThings_Stash__'
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -56,7 +58,7 @@ export default function SetupWizard({ onComplete }) {
               id="dtBaseDir"
               value={dtBaseDir}
               onChange={(e) => setDtBaseDir(e.target.value)}
-              placeholder="~/Library/Containers/com.liuliu.draw-things/Data/Documents"
+              placeholder={dtBaseDir}
               className="px-4 py-3 border-2 border-gray-250 rounded-md text-md transition-all font-mono focus:outline-none focus:border-[#667eea] focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
               required
             />
@@ -78,7 +80,7 @@ export default function SetupWizard({ onComplete }) {
               id="stashDir"
               value={stashDir}
               onChange={(e) => setStashDir(e.target.value)}
-              placeholder="~/DrawThings_Stash"
+              placeholder={stashDir}
               className="px-4 py-3 border-2 border-gray-250 rounded-md text-md transition-all font-mono focus:outline-none focus:border-[#667eea] focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
               required
             />

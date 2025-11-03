@@ -52,25 +52,32 @@
 │ 4. Scan & Import Models                                         │
 │    └─> scan_mac_models('model')                                │
 │    └─> scan_mac_models('lora')                                 │
-│    └─> scan_mac_models('controlnet')                           │
+│    └─> scan_mac_models('control')  ← Note: 'control' not 'controlnet'│
 │        └─> For each model type:                                │
-│            ├─> Read DrawThings JSON files:                     │
-│            │   ├─> custom.json (main models)                   │
-│            │   ├─> custom_lora.json (LoRAs)                    │
-│            │   └─> custom_controlnet.json (ControlNets)        │
-│            ├─> List .ckpt files in Models directory            │
-│            ├─> For each model:                                 │
-│            │   ├─> Extract metadata from JSON                  │
-│            │   ├─> Get file size                               │
-│            │   ├─> Calculate checksum (optional)               │
+│            ├─> Read DrawThings JSON file FIRST:                │
+│            │   ├─> 'model' → custom.json                       │
+│            │   ├─> 'lora' → custom_lora.json                   │
+│            │   └─> 'control' → custom_controlnet.json          │
+│            ├─> Extract filenames from JSON entries             │
+│            │   (ONLY files listed in JSON belong to this type) │
+│            ├─> For each file in JSON:                          │
+│            │   ├─> Check if already in database (skip if yes)  │
+│            │   ├─> Extract metadata from JSON entry:           │
+│            │   │   ├─> display_name_original (entry.name)      │
+│            │   │   └─> lora_strength (entry.strength × 10)     │
+│            │   ├─> Get file size (via Tauri metadata)          │
+│            │   ├─> Use array position as mac_display_order     │
 │            │   └─> Insert into database:                       │
 │            │       ├─> filename (primary key)                  │
 │            │       ├─> display_name_original (from JSON)       │
-│            │       ├─> model_type                              │
+│            │       ├─> model_type (from parameter)             │
+│            │       ├─> file_size (from metadata)               │
+│            │       ├─> source_path (full path)                 │
 │            │       ├─> exists_mac_hd = true                    │
 │            │       ├─> exists_stash = false (initially)        │
-│            │       └─> mac_display_order (from JSON array position)│
-│            └─> Return scan results                             │
+│            │       ├─> mac_display_order (array index)         │
+│            │       └─> lora_strength (if LoRA)                 │
+│            └─> Return scan results (found, imported, skipped)  │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -116,7 +123,6 @@
 │            ├─> Load settings.json from:                         │
 │            │   └─> ~/.drawthings_companion/settings.json        │
 │            ├─> Merge configurations                             │
-│            ├─> init_database(STASH_DIR) // Ensures tables exist │
 │            └─> Returns: { initialized: true, ... }              │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
@@ -160,8 +166,21 @@
 #### `scan_mac_models(modelType)`
 - **When:** First run only (after database creation)
 - **Purpose:** Scan DrawThings directory and populate database
-- **Parameters:** `'model'`, `'lora'`, or `'controlnet'`
-- **Returns:** Scan results (found, imported, skipped, errors)
+- **Parameters:** `'model'`, `'lora'`, or `'control'` (NOT 'controlnet')
+- **How it works:**
+  1. Reads the appropriate JSON file (custom.json, custom_lora.json, or custom_controlnet.json)
+  2. Extracts filenames from JSON entries - these are the ONLY files for this type
+  3. Imports only those files with correct model_type
+  4. Uses JSON array position as mac_display_order
+- **Returns:** Scan results object:
+  ```javascript
+  {
+    found: 15,      // Number of files found in JSON
+    imported: 15,   // Number successfully imported
+    skipped: 0,     // Number already in database
+    errors: []      // Array of any errors
+  }
+  ```
 
 #### `get_models(modelType)`
 - **When:** Every time a view loads
@@ -216,22 +235,44 @@
 ## 🐛 Troubleshooting
 
 ### "No such table: ckpt_models"
-- Database not initialized
-- Check: Does `[STASH_DIR]/App_Data/drawthings_companion.sqlite` exist?
-- Fix: Delete database and restart app (will be recreated)
+- **Cause:** Database not initialized
+- **Check:** Does `[STASH_DIR]/App_Data/drawthings_companion.sqlite` exist?
+- **Fix:** Delete database and restart app (will be recreated)
 
 ### "sql.load not allowed. Plugin not found"
-- SQLite plugin not installed
-- Check: `src-tauri/Cargo.toml` has `tauri-plugin-sql`
-- Check: `src-tauri/src/lib.rs` has `.plugin(tauri_plugin_sql::Builder::default().build())`
-- Fix: Rebuild Tauri app
+- **Cause:** SQLite plugin not installed
+- **Check:**
+  - `src-tauri/Cargo.toml` has `tauri-plugin-sql = { version = "2", features = ["sqlite"] }`
+  - `src-tauri/src/lib.rs` has `.plugin(tauri_plugin_sql::Builder::default().build())`
+  - `src-tauri/capabilities/default.json` has SQL permissions
+- **Fix:** Rebuild Tauri app with `npm run tauri build`
+
+### "forbidden path: ~/Library/Containers/..."
+- **Cause:** Missing Tauri file system permissions or tilde not expanded
+- **Check:**
+  - `src-tauri/capabilities/default.json` has `fs:allow-read-dir` and `fs:allow-stat` permissions
+  - Path includes `$HOME/Library/Containers/com.liuliu.draw-things/**`
+  - `app_init()` expands tilde (~) to full home directory path
+- **Fix:** Add missing permissions and rebuild
 
 ### SetupWizard shows every time
-- Settings not saved
-- Check: `~/.drawthings_companion/settings.json` exists
-- Check: `settings.json` has `"initialized": true`
-- Fix: Delete settings and run setup again
+- **Cause:** Settings not saved or initialized flag missing
+- **Check:**
+  - `~/.drawthings_companion/settings.json` exists
+  - `settings.json` has `"initialized": true`
+- **Fix:** Delete settings and run setup again
+
+### All models showing as 'model' type (LoRAs and ControlNets not categorized)
+- **Cause:** Old bug where scan_mac_models didn't consult JSON files
+- **Status:** ✅ FIXED - Now reads JSON files first to properly categorize
+- **How to fix if you have old database:** Delete database and re-run first setup
+
+### "Unknown model type: controlnet"
+- **Cause:** Using 'controlnet' instead of 'control' as parameter
+- **Fix:** Use `scan_mac_models('control')` not `scan_mac_models('controlnet')`
 
 ---
 
-**Last Updated:** 2025-11-03
+**Last Updated:** 2025-11-03 (End of Day)
+
+**Current Status:** ✅ All major features working correctly - models displaying by type from database!

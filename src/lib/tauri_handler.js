@@ -19,6 +19,41 @@ import { invoke } from '@tauri-apps/api/core';
 
 // ############################################################################
 /**
+ * rescan_all_models
+ *
+ * Manually trigger a full rescan of all model types.
+ * Useful for repopulating database or importing new models.
+ *
+ * @returns {Promise<Object>} Combined scan results for all types
+ */
+export async function rescan_all_models() {
+  try {
+    console.log('[tauri_handler] rescan_all_models - starting full rescan');
+
+    const modelScan = await scan_mac_models('model');
+    const loraScan = await scan_mac_models('lora');
+    const controlScan = await scan_mac_models('control');
+
+    const results = {
+      models: modelScan,
+      loras: loraScan,
+      controlnets: controlScan,
+      total_found: modelScan.found + loraScan.found + controlScan.found,
+      total_imported: modelScan.imported + loraScan.imported + controlScan.imported,
+      total_skipped: modelScan.skipped + loraScan.skipped + controlScan.skipped
+    };
+
+    console.log('[tauri_handler] rescan_all_models completed:', results);
+    return results;
+
+  } catch (error) {
+    console.error('[tauri_handler] rescan_all_models error:', error);
+    throw error;
+  }
+}
+
+// ############################################################################
+/**
  * init_database
  *
  * Creates the SQLite database and tables if they don't exist.
@@ -257,9 +292,9 @@ export async function update_models_order(updates) {
  * scan_mac_models
  *
  * Scans DrawThings directory for models and imports them into database.
- * Creates checksums and copies files to stash if needed.
+ * Reads DrawThings JSON files for metadata and display order.
  *
- * @param {string} modelType - Type of model: 'model', 'lora', or 'controlnet'
+ * @param {string} modelType - Type of model: 'model', 'lora', or 'control'
  * @returns {Promise<Object>} Scan results:
  *   {
  *     found: number,      // Number of models found
@@ -270,15 +305,171 @@ export async function update_models_order(updates) {
  */
 export async function scan_mac_models(modelType) {
   try {
-    return await invoke('scan_mac_models', { modelType });
-  } catch (error) {
-    console.error('[tauri_handler] scan_mac_models error:', error);
-    // Return empty results to prevent crashes
-    return {
+    console.log('[tauri_handler] scan_mac_models - starting for type:', modelType);
+
+    const results = {
       found: 0,
       imported: 0,
       skipped: 0,
       errors: []
+    };
+
+    // Load config to get directories
+    const config = await app_init();
+    if (!config.DT_BASE_DIR || !config.STASH_DIR) {
+      throw new Error('DT_BASE_DIR or STASH_DIR not configured');
+    }
+
+    console.log('[tauri_handler] scan_mac_models - config.DT_BASE_DIR:', config.DT_BASE_DIR);
+    console.log('[tauri_handler] scan_mac_models - config.STASH_DIR:', config.STASH_DIR);
+
+    const { readTextFile, readDir } = await import('@tauri-apps/plugin-fs');
+    const { join } = await import('@tauri-apps/api/path');
+    const Database = (await import('@tauri-apps/plugin-sql')).default;
+
+    // Map model type to JSON filename
+    const jsonFilenames = {
+      'model': 'custom.json',
+      'lora': 'custom_lora.json',
+      'control': 'custom_controlnet.json'
+    };
+
+    const jsonFilename = jsonFilenames[modelType];
+    if (!jsonFilename) {
+      throw new Error(`Unknown model type: ${modelType}`);
+    }
+
+    // Read DrawThings JSON file for metadata and display order
+    const jsonPath = await join(config.DT_BASE_DIR, 'Models', jsonFilename);
+    console.log('[tauri_handler] Reading JSON from:', jsonPath);
+
+    let jsonData = [];
+    try {
+      const jsonContent = await readTextFile(jsonPath);
+      jsonData = JSON.parse(jsonContent);
+      console.log('[tauri_handler] Found', jsonData.length, 'entries in JSON for type:', modelType);
+    } catch (jsonError) {
+      console.warn('[tauri_handler] Could not read JSON file:', jsonError.message);
+      // If JSON doesn't exist, can't determine which files belong to this type
+      return {
+        found: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [{ error: `Could not read ${jsonFilename}: ${jsonError.message}` }]
+      };
+    }
+
+    // Extract filenames from JSON - these are the ONLY files that belong to this model type
+    const filesToImport = [];
+    for (let i = 0; i < jsonData.length; i++) {
+      const entry = jsonData[i];
+      if (entry.file) {
+        filesToImport.push({
+          filename: entry.file,
+          jsonEntry: entry,
+          order: i
+        });
+      }
+    }
+
+    results.found = filesToImport.length;
+    console.log('[tauri_handler] Will import', filesToImport.length, 'files for type:', modelType);
+
+    // Open database
+    const modelsDir = await join(config.DT_BASE_DIR, 'Models');
+    const dbPath = await join(config.STASH_DIR, 'App_Data', 'drawthings_companion.sqlite');
+    const db = await Database.load(`sqlite:${dbPath}`);
+
+    // Process each file from JSON
+    for (const fileInfo of filesToImport) {
+      const filename = fileInfo.filename;
+      const jsonEntry = fileInfo.jsonEntry;
+
+      try {
+        // Check if already in database
+        const existing = await db.select(
+          'SELECT filename FROM ckpt_models WHERE filename = $1',
+          [filename]
+        );
+
+        if (existing.length > 0) {
+          results.skipped++;
+          console.log(`[tauri_handler] Skipping ${filename} (already in database)`);
+          continue;
+        }
+
+        // Extract metadata from JSON entry
+        const displayNameOriginal = jsonEntry.name || null;
+        const loraStrength = modelType === 'lora' && jsonEntry.strength
+          ? Math.round(jsonEntry.strength * 10)
+          : null;
+
+        // Display order is the position in JSON array
+        const macDisplayOrder = fileInfo.order;
+
+        // Get file size
+        const filePath = await join(modelsDir, filename);
+        let fileSize = null;
+        try {
+          // Use Tauri's metadata if available, otherwise skip
+          const { metadata } = await import('@tauri-apps/plugin-fs');
+          const meta = await metadata(filePath);
+          fileSize = meta.size;
+        } catch (sizeError) {
+          console.warn('[tauri_handler] Could not get file size for:', filename);
+        }
+
+        // Insert into database
+        await db.execute(
+          `INSERT INTO ckpt_models (
+            filename,
+            display_name_original,
+            model_type,
+            file_size,
+            source_path,
+            exists_mac_hd,
+            exists_stash,
+            mac_display_order,
+            lora_strength
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            filename,
+            displayNameOriginal,
+            modelType,
+            fileSize,
+            filePath,
+            true,  // exists_mac_hd (we're scanning from Mac)
+            false, // exists_stash (not copied yet)
+            macDisplayOrder,
+            loraStrength
+          ]
+        );
+
+        results.imported++;
+        console.log(`[tauri_handler] Imported ${filename}`);
+
+      } catch (fileError) {
+        console.error('[tauri_handler] Error processing file:', filename, fileError);
+        results.errors.push({
+          filename,
+          error: fileError.message
+        });
+      }
+    }
+
+    // Close database
+    await db.close();
+
+    console.log('[tauri_handler] scan_mac_models completed:', results);
+    return results;
+
+  } catch (error) {
+    console.error('[tauri_handler] scan_mac_models error:', error);
+    return {
+      found: 0,
+      imported: 0,
+      skipped: 0,
+      errors: [{ error: error.message }]
     };
   }
 }
@@ -387,19 +578,36 @@ export async function app_init() {
       }
 
       console.log('[tauri_handler] Parsed .env config:', Object.keys(envConfig));
+
+      // Expand ~ to home directory in paths
+      const { homeDir } = await import('@tauri-apps/api/path');
+      const homePath = await homeDir();
+      console.log('[tauri_handler] Home directory:', homePath);
+
+      for (const key in envConfig) {
+        if (typeof envConfig[key] === 'string' && envConfig[key].startsWith('~')) {
+          const oldValue = envConfig[key];
+          envConfig[key] = envConfig[key].replace('~', homePath);
+          console.log(`[tauri_handler] Expanded ${key}: ${oldValue} -> ${envConfig[key]}`);
+        }
+      }
     } else {
-      console.warn('[tauri_handler] Could not find .env file, using defaults');
+      // console.warn('[tauri_handler] Could not find .env file, using defaults');
     }
+
+    // Expand ~ in defaults too
+    const { homeDir } = await import('@tauri-apps/api/path');
+    const homePath = await homeDir();
 
     // Ensure we have defaults if .env wasn't loaded
     if (!envConfig.DT_BASE_DIR) {
-      envConfig.DT_BASE_DIR = '~/Library/Containers/com.liuliu.draw-things/Data/Documents';
+      envConfig.DT_BASE_DIR = `${homePath}/Library/Containers/com.liuliu.draw-things/Data/Documents`;
     }
     if (!envConfig.STASH_DIR) {
       envConfig.STASH_DIR = '/Volumes/Extreme2Tb/__DrawThings_Stash__';
     }
     if (!envConfig.DTC_APP_DIR) {
-      envConfig.DTC_APP_DIR = '~/.drawthings_companion';
+      envConfig.DTC_APP_DIR = `${homePath}/.drawthings_companion`;
     }
 
     console.log('[tauri_handler] Final env config:', envConfig);
@@ -416,6 +624,14 @@ export async function app_init() {
     // Merge configurations (settings.json overrides .env)
     const config = { ...envConfig, ...settingsConfig };
 
+    // Expand ~ in merged config paths
+    for (const key in config) {
+      if (typeof config[key] === 'string' && config[key].startsWith('~')) {
+        config[key] = config[key].replace('~', homePath);
+        console.log(`[tauri_handler] Expanded merged ${key}: ${config[key]}`);
+      }
+    }
+
     // Validate required keys
     const requiredKeys = ['DT_BASE_DIR'];
     const missingKeys = requiredKeys.filter(key => !config[key]);
@@ -424,25 +640,20 @@ export async function app_init() {
       console.warn('[tauri_handler] Missing required config keys:', missingKeys);
     }
 
-    // Initialize database if STASH_DIR is configured and app is initialized
-    if (config.STASH_DIR && config.initialized) {
-      try {
-        await init_database(config.STASH_DIR);
-      } catch (dbError) {
-        console.warn('[tauri_handler] Database initialization warning (may already exist):', dbError.message);
-      }
-    }
-
+    console.log('[tauri_handler] Final merged config:', config);
     return config;
 
   } catch (error) {
     console.error('[tauri_handler] app_init error:', error);
 
-    // Return default configuration to prevent crashes
+    // Return default configuration to prevent crashes (with expanded paths)
+    const { homeDir } = await import('@tauri-apps/api/path');
+    const homePath = await homeDir();
+
     return {
-      DT_BASE_DIR: '~/Library/Containers/com.liuliu.draw-things/Data/Documents',
+      DT_BASE_DIR: `${homePath}/Library/Containers/com.liuliu.draw-things/Data/Documents`,
       STASH_DIR: '/Volumes/Extreme2Tb/__DrawThings_Stash__',
-      DTC_APP_DIR: '~/.drawthings_companion'
+      DTC_APP_DIR: `${homePath}/.drawthings_companion`
     };
   }
 }

@@ -11,6 +11,7 @@ export function useAppInitialization() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [config, setConfig] = useState(null);
 
   useEffect(() => {
     checkInitialization();
@@ -21,11 +22,12 @@ export function useAppInitialization() {
       setLoading(true);
 
       // Check if app is initialized by loading settings
-      const config = await TauriHandler.app_init();
+      const loadedConfig = await TauriHandler.app_init();
+      setConfig(loadedConfig);
 
       // Check if settings.json exists and has been initialized
       // If settings.json has 'initialized: true', we're good to go
-      if (config.initialized === true) {
+      if (loadedConfig.initialized === true) {
         setInitialized(true);
         setNeedsSetup(false);
         console.log('[useAppInitialization] App is initialized');
@@ -57,7 +59,7 @@ export function useAppInitialization() {
       // Scan and import models from Mac
       const modelScan = await TauriHandler.scan_mac_models('model');
       const loraScan = await TauriHandler.scan_mac_models('lora');
-      const controlnetScan = await TauriHandler.scan_mac_models('controlnet');
+      const controlnetScan = await TauriHandler.scan_mac_models('control');
 
       console.log('Model scan results:', {
         models: modelScan,
@@ -86,6 +88,7 @@ export function useAppInitialization() {
     loading,
     error,
     needsSetup,
+    config,
     initializeApp,
     recheckInitialization: checkInitialization,
   };

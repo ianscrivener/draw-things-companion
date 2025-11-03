@@ -1,10 +1,12 @@
 # DrawThings Companion - TODO List
 
-**Last Updated:** 2025-11-03
+**Last Updated:** 2025-11-03 (End of Day)
 
 ---
 
 ## 🎯 Current Status
+
+✅ **WORKING STATE** - Application successfully displays models from database!
 
 The application has been refactored from a backend-heavy Rust architecture to a **frontend-first JavaScript architecture** with lightweight Tauri API calls for file system access.
 
@@ -26,25 +28,36 @@ The application has been refactored from a backend-heavy Rust architecture to a 
 - [x] Updated database schema to use display_name_original and display_name fields
 - [x] Cleaned up deprecated documentation (removed 7 outdated files from _documentation/)
 - [x] Added documentation guidelines to CLAUDE_NOTES.md
+- [x] Added SQLite plugin to Rust backend (Cargo.toml, lib.rs, capabilities)
+- [x] Implemented `init_database()` - creates database and tables automatically
+- [x] **FIXED CRITICAL BUG:** Implemented `scan_mac_models()` to properly categorize models by consulting JSON files
+- [x] Fixed path expansion for tilde (~) in configuration paths
+- [x] Fixed Tauri permissions for read-dir and stat operations
+- [x] Fixed model type parameter ('controlnet' → 'control')
+- [x] Created APP_STARTUP_STEPS.md documenting first start and restart flows
+- [x] **VERIFIED WORKING:** Main models, LoRAs, and ControlNets all displaying correctly from database
 
 ---
 
-## 🚧 In Progress / Next Steps
+## 🚧 Next Steps
 
-### **High Priority**
+### **High Priority - Core Features**
 
-1. **Implement Model Management (Frontend Logic)**
-   - [x] 1.1) `get_models()` - Reads models from SQLite database, filters by type, returns with Mac/Stash status
-   - [ ] 1.2) `add_model_to_mac()` - Update database record (set exists_mac_hd=true, mac_display_order)
-   - [ ] 1.3) `remove_model_from_mac()` - Update database record (set exists_mac_hd=false, mac_display_order=null)
-   - [ ] 1.4) `update_models_order()` - Update mac_display_order in database for multiple models
-   - [ ] 1.5) `delete_model()` - Delete from database, optionally delete files
+1. **Model Management Operations** ⏳ NOT YET IMPLEMENTED
+   - [x] 1.1) `get_models()` - ✅ WORKING - Reads models from SQLite database
+   - [x] 1.2) `scan_mac_models()` - ✅ WORKING - Scans DrawThings directory, populates database correctly by model type
+   - [ ] 1.3) `add_model_to_mac()` - Copy model from Stash to Mac HD, update database
+   - [ ] 1.4) `remove_model_from_mac()` - Move model from Mac HD to Stash, update database
+   - [ ] 1.5) `update_models_order()` - Update mac_display_order in database for drag & drop reordering
+   - [ ] 1.6) `delete_model()` - Delete from database, optionally delete physical files
+   - [ ] 1.7) `rescan_all_models()` - Manual rescan trigger (function exists but needs UI integration)
 
-2. **Frontend Integration with Database**
-   - [x] 2.1) Updated `useModels.js` hook to work with new flat database structure
+2. **Frontend Integration** ✅ COMPLETE
+   - [x] 2.1) Updated `useModels.js` hook to work with flat database structure
    - [x] 2.2) Updated `TwoPaneManager.jsx` to display models from database
    - [x] 2.3) Updated model property references (filename, display_name, exists_mac_hd, mac_display_order)
    - [x] 2.4) Fixed LoRA strength display (divide by 10 for actual value)
+   - [x] 2.5) SetupWizard displays .env values as defaults
 
 
 
@@ -88,15 +101,24 @@ The application has been refactored from a backend-heavy Rust architecture to a 
 
 ## 🐛 Known Issues
 
-1. **Settings.json not created until first-run setup completes**
-   - Fixed: SetupWizard now properly wired up
+✅ **All Critical Issues Resolved!**
 
-2. **Tauri permission errors**
-   - Fixed: Updated capabilities/default.json with proper file system permissions
+Previously fixed issues:
+1. ~~Settings.json not created until first-run setup completes~~ - ✅ Fixed
+2. ~~Tauri permission errors~~ - ✅ Fixed
+3. ~~All .ckpt files being tagged as 'model' type~~ - ✅ Fixed - now properly categorizes by consulting JSON files
+4. ~~Path expansion for tilde (~)~~ - ✅ Fixed
+5. ~~Model type parameter mismatch ('controlnet' vs 'control')~~ - ✅ Fixed
 
-3. **Backend function stubs still present**
-   - Some backend functions in tauri_handler.js are stubs that call `invoke()`
-   - These need to be replaced with frontend logic or removed
+### Remaining Work
+
+**Model Operations** - The following functions exist as stubs in tauri_handler.js that call `invoke()`:
+- `add_model_to_mac()` - needs implementation
+- `remove_model_from_mac()` - needs implementation
+- `update_models_order()` - needs implementation
+- `delete_model()` - needs implementation
+
+These are the next features to implement for full functionality.
 
 ---
 
