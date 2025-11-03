@@ -61,10 +61,22 @@ The application has been refactored from a backend-heavy Rust architecture to a 
 
 
 
+3. ** .ckpt model data uimport to SQLite DB
+- [x] 3.1) add main models to SQLite DB
+- [x] 3.2) add LoRA to SQLite DB
+- [ ] 3.3) add controlnet to SQLite DB
+- [ ] 3.4) add vae to SQLite DB
+- [ ] 3.5) add text_exncoder to SQLite DB
+- [ ] 3.6) add image_encoder to SQLite DB
+- [ ] 3.7) add image_encoder to SQLite DB
+- [ ] 3.8) import master CSV model data for reference ⭐️⭐️⭐️
+
+
+
+
 ### **Medium Priority**
 
 5. **Configuration Management**
-   - [ ] `get_config_value()` - Read from settings.json (may be redundant with app_init)
    - [ ] `update_stash_dir()` - May be redundant, already handled in SettingsView
    - [ ] Review if these backend stubs are still needed
 
