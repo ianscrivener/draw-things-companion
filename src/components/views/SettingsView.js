@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Settings, Folder } from 'lucide-react';
-import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
+import * as TauriHandler from '../../lib/tauri_handler';
 
 export default function SettingsView() {
   const [paths, setPaths] = useState({
@@ -12,8 +11,6 @@ export default function SettingsView() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanResults, setScanResults] = useState(null);
 
   useEffect(() => {
     loadPaths();
@@ -21,10 +18,12 @@ export default function SettingsView() {
 
   async function loadPaths() {
     try {
-      const appPaths = await invoke('get_app_paths');
+      // Load configuration from .env file using app_init
+      // This merges .env with settings.json (if exists)
+      const config = await TauriHandler.app_init();
       setPaths({
-        drawThingsPath: appPaths.dt_base_dir,
-        stashPath: appPaths.stash_dir || ''
+        drawThingsPath: config.DT_BASE_DIR || '',
+        stashPath: config.STASH_DIR || ''
       });
     } catch (error) {
       console.error('Failed to load paths:', error);
@@ -35,7 +34,7 @@ export default function SettingsView() {
 
   async function handleBrowseStash() {
     try {
-      const selected = await open({
+      const selected = await TauriHandler.open({
         directory: true,
         multiple: false,
         title: 'Select Stash Directory'
@@ -43,8 +42,21 @@ export default function SettingsView() {
 
       if (selected) {
         setIsSaving(true);
-        await invoke('update_stash_dir', { newStashDir: selected });
+
+        // Load existing settings and update STASH_DIR
+        const config = await TauriHandler.app_init();
+        const newSettings = {
+          ...config,
+          STASH_DIR: selected
+        };
+
+        // Save to both DTC_APP_DIR and STASH_DIR/App_Data
+        await TauriHandler.save_settings(newSettings);
+
+        // Update UI
         setPaths(prev => ({ ...prev, stashPath: selected }));
+
+        console.log('Stash directory updated to:', selected);
       }
     } catch (error) {
       console.error('Failed to update stash directory:', error);
@@ -74,15 +86,14 @@ export default function SettingsView() {
           label: 'DrawThings Directory',
           value: paths.drawThingsPath,
           type: 'readonly',
-          description: 'Location of DrawThings app data (read-only)'
+          description: 'Location of DrawThings app data (from .env file)'
         },
         {
           label: 'Stash Directory',
           value: paths.stashPath,
           type: 'path',
-          description: 'External directory for offloading models (configured in .env)',
-          onBrowse: handleBrowseStash,
-          disabled: true
+          description: 'External directory for offloading models (saved to settings.json)',
+          onBrowse: handleBrowseStash
         }
       ]
     }
@@ -118,7 +129,7 @@ export default function SettingsView() {
                       </div>
                       <div className="setting-control">
                         {item.type === 'readonly' && (
-                          <span className="readonly-value">{item.value}</span>
+                          <span className="readonly-value">{item.value || 'Not set'}</span>
                         )}
                         {item.type === 'path' && (
                           <div className="path-input">
@@ -128,10 +139,10 @@ export default function SettingsView() {
                               readOnly
                               placeholder="Not set"
                             />
-                            <button 
+                            <button
                               className="btn-browse"
                               onClick={item.onBrowse}
-                              disabled={item.disabled || isSaving}
+                              disabled={isSaving}
                             >
                               {isSaving ? 'Saving...' : 'Browse'}
                             </button>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Clipboard } from 'lucide-react';
 import { listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/core';
+import * as TauriHandler from '../lib/tauri_handler';
 import LogModal from './LogModal';
 
 export default function LogViewer() {
@@ -23,7 +23,7 @@ export default function LogViewer() {
         // Check if we're in Tauri environment
         if (typeof window !== 'undefined' && window.__TAURI__) {
           // First, fetch all historical logs
-          const historicalLogs = await invoke('get_all_logs');
+          const historicalLogs = await TauriHandler.get_all_logs();
           console.log('Fetched historical logs:', historicalLogs.length);
           setLogs(historicalLogs);
           historicalLogCount = historicalLogs.length;

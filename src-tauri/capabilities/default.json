@@ -4,20 +4,6 @@
   "description": "Capability for the main window",
   "windows": ["main"],
   "permissions": [
-    {
-      "identifier": "shell:allow-execute",
-      "allow": [
-            {"name": "exec-sh",            "cmd": "sh",           "args": true },
-            {"name": "exec_jq",            "cmd": "jq",           "args": true },
-            {"name": "exec_mkdir",         "cmd": "mkdir",        "args": true },
-            {"name": "exec_mv",            "cmd": "mv",           "args": true },
-            {"name": "exec_shasum",        "cmd": "shasum",       "args": true }
-      ]
-    },
-    {
-      "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "$HOME/tauri.txt" }]
-    },
     "core:default",
     "fs:allow-read",
     "fs:allow-write",

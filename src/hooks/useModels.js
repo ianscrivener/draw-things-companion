@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import * as TauriHandler from '../lib/tauri_handler';
 
 /**
  * Custom hook for managing models with Mac HD and Stash panes
@@ -23,7 +23,7 @@ export function useModels(modelType) {
       setLoading(true);
       setError(null);
 
-      const allModels = await invoke('get_models', { modelType });
+      const allModels = await TauriHandler.get_models(modelType);
       console.log(`[useModels] Loaded ${allModels.length} ${modelType} models:`, allModels);
 
       // Separate into Mac and Stash lists
@@ -126,21 +126,16 @@ export function useModels(modelType) {
       // Process all pending changes from snapshot
       for (const change of changesToSave) {
         if (change.action === 'add') {
-          await invoke('add_model_to_mac', {
-            modelId: change.modelId,
-            displayOrder: change.order,
-          });
+          await TauriHandler.add_model_to_mac(change.modelId, change.order);
         } else if (change.action === 'remove') {
-          await invoke('remove_model_from_mac', {
-            modelId: change.modelId,
-          });
+          await TauriHandler.remove_model_from_mac(change.modelId);
         }
       }
 
       // Update order for all mac models from snapshot
       const orderUpdates = macModelsSnapshot.map(m => [m.model.id, m.display_order]);
       if (orderUpdates.length > 0) {
-        await invoke('update_models_order', { updates: orderUpdates });
+        await TauriHandler.update_models_order(orderUpdates);
       }
 
       // Reload to get fresh data

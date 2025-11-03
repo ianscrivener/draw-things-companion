@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useDragAndDrop } from '@formkit/drag-and-drop/react';
 import { Save, X, HardDrive, Archive, Trash2 } from 'lucide-react';
-import { invoke } from '@tauri-apps/api/core';
+import * as TauriHandler from '../lib/tauri_handler';
 
 export default function TwoPaneManager({
   modelType,
@@ -76,10 +76,7 @@ export default function TwoPaneManager({
 
     try {
       setDeleting(true);
-      await invoke('delete_model', {
-        modelId: modelToDelete.model.id,
-        deleteFiles: deleteFiles,
-      });
+      await TauriHandler.delete_model(modelToDelete.model.id, deleteFiles);
 
       // Close confirmation dialog
       setShowDeleteConfirm(false);

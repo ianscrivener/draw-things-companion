@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import * as TauriHandler from '../lib/tauri_handler';
 
 /**
  * Hook to handle first-run initialization of the app
@@ -21,7 +21,7 @@ export function useAppInitialization() {
       setLoading(true);
       
       // Check if stash directory is configured
-      const stashExists = await invoke('get_config_value', { key: 'STASH_EXISTS' });
+      const stashExists = await TauriHandler.get_config_value('STASH_EXISTS');
       
       if (!stashExists || stashExists !== 'true') {
         setNeedsSetup(true);
@@ -44,15 +44,12 @@ export function useAppInitialization() {
       setError(null);
 
       // Initialize app with directories
-      await invoke('initialize_app', {
-        dtBaseDir,
-        stashDir,
-      });
+      await TauriHandler.app_first_run(dtBaseDir, stashDir);
 
       // Scan and import models from Mac
-      const modelScan = await invoke('scan_mac_models', { modelType: 'model' });
-      const loraScan = await invoke('scan_mac_models', { modelType: 'lora' });
-      const controlnetScan = await invoke('scan_mac_models', { modelType: 'controlnet' });
+      const modelScan = await TauriHandler.scan_mac_models('model');
+      const loraScan = await TauriHandler.scan_mac_models('lora');
+      const controlnetScan = await TauriHandler.scan_mac_models('controlnet');
 
       console.log('Model scan results:', {
         models: modelScan,
