@@ -27,3 +27,4 @@ export { get_all_logs } from './tauri_handlers/get_all_logs.js';
 export { invoke } from '@tauri-apps/api/core';
 export { listen, emit } from '@tauri-apps/api/event';
 export { open } from '@tauri-apps/plugin-dialog';
+export { stat } from '@tauri-apps/plugin-fs';

@@ -104,6 +104,7 @@
         }
       ]
     },
+    
     "opener:default",
     "sql:default",
     "sql:allow-load",

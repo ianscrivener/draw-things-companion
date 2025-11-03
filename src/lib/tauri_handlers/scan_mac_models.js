@@ -1,4 +1,5 @@
-import { app_init } from './app_init.js';
+import { app_init }   from './app_init.js';
+
 
 // ############################################################################
 /**
@@ -36,8 +37,10 @@ export async function scan_mac_models(modelType) {
     console.log('[tauri_handler] scan_mac_models - config.DT_BASE_DIR:', config.DT_BASE_DIR);
     console.log('[tauri_handler] scan_mac_models - config.STASH_DIR:', config.STASH_DIR);
 
-    const { readTextFile, readDir } = await import('@tauri-apps/plugin-fs');
-    const { join } = await import('@tauri-apps/api/path');
+    // const { readTextFile, readDir, stat } = await import('@tauri-apps/plugin-fs');
+    const { readTextFile, stat } = await import('@tauri-apps/plugin-fs');
+    const { join }                  = await import('@tauri-apps/api/path');
+
     const Database = (await import('@tauri-apps/plugin-sql')).default;
 
     // Map model type to JSON filename
@@ -123,17 +126,9 @@ export async function scan_mac_models(modelType) {
 
         // Get file size
         const filePath = await join(modelsDir, filename);
-        let fileSize = null;
-        try {
-          // Use Tauri's metadata if available, otherwise skip
-          const { metadata } = await import('@tauri-apps/plugin-fs');
-          const meta = await metadata(filePath);
-          fileSize = meta.size;
-          // xonsole
-        }
-        catch (sizeError) {
-          console.warn('[tauri_handler] Could not get file size for:', filename);
-        }
+        let fileSize = 0;
+        const file_stats = await stat(filePath);
+        fileSize = file_stats.size;
 
         // Insert into database
         await db.execute(
@@ -164,7 +159,8 @@ export async function scan_mac_models(modelType) {
         results.imported++;
         console.log(`[tauri_handler] Imported ${filename}`);
 
-      } catch (fileError) {
+      }
+      catch (fileError) {
         console.error('[tauri_handler] Error processing file:', filename, fileError);
         results.errors.push({
           filename,
@@ -179,7 +175,8 @@ export async function scan_mac_models(modelType) {
     console.log('[tauri_handler] scan_mac_models completed:', results);
     return results;
 
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[tauri_handler] scan_mac_models error:', error);
     return {
       found: 0,
