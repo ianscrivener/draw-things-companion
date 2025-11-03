@@ -19,20 +19,28 @@ export function useAppInitialization() {
   const checkInitialization = async () => {
     try {
       setLoading(true);
-      
-      // Check if stash directory is configured
-      const stashExists = await TauriHandler.get_config_value('STASH_EXISTS');
-      
-      if (!stashExists || stashExists !== 'true') {
-        setNeedsSetup(true);
-        setInitialized(false);
-      } else {
+
+      // Check if app is initialized by loading settings
+      const config = await TauriHandler.app_init();
+
+      // Check if settings.json exists and has been initialized
+      // If settings.json has 'initialized: true', we're good to go
+      if (config.initialized === true) {
         setInitialized(true);
         setNeedsSetup(false);
+        console.log('[useAppInitialization] App is initialized');
+      } else {
+        // No settings.json or not initialized - need setup
+        setNeedsSetup(true);
+        setInitialized(false);
+        console.log('[useAppInitialization] App needs first-run setup');
       }
     } catch (err) {
       console.error('Initialization check failed:', err);
       setError(err.message);
+      // On error, assume we need setup
+      setNeedsSetup(true);
+      setInitialized(false);
     } finally {
       setLoading(false);
     }

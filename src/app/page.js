@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Nav from '@/components/Nav';
 import LogViewer from '@/components/LogViewer';
+import SetupWizard from '@/components/SetupWizard';
+import { useAppInitialization } from '@/hooks/useAppInitialization';
 import StashesView from '@/components/views/StashesView';
 import ModelsView from '@/components/views/ModelsView';
 import LoRAsView from '@/components/views/LoRAsView';
@@ -14,10 +16,28 @@ import SettingsView from '@/components/views/SettingsView';
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState('models');
+  const { initialized, loading, needsSetup, initializeApp } = useAppInitialization();
 
   const handleNavigate = (section) => {
     setActiveSection(section);
   };
+
+  // Show loading state while checking initialization
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-screen bg-gray-50">
+        <div className="text-center">
+          <div className="text-xl font-semibold mb-2">Loading DrawThings Companion...</div>
+          <div className="text-sm text-gray-600">Checking initialization status</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show setup wizard if app needs first-run setup
+  if (needsSetup) {
+    return <SetupWizard onComplete={initializeApp} />;
+  }
 
   const renderView = () => {
     switch (activeSection) {

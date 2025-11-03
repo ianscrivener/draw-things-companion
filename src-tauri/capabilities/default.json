@@ -5,13 +5,43 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "fs:allow-read",
-    "fs:allow-write",
-    "fs:allow-remove",
-    "fs:allow-mkdir",
-    "fs:allow-rename",
-    "fs:allow-copy-file",
-    "fs:allow-exists",
+    "core:path:default",
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        { "path": "$HOME/.drawthings_companion/**" },
+        { "path": "$HOME/Library/Containers/com.liuliu.draw-things/**" },
+        { "path": "/Volumes/**" },
+        { "path": ".env" },
+        { "path": "../.env" },
+        { "path": "../../.env" },
+        { "path": "../../../.env" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        { "path": "$HOME/.drawthings_companion/**" },
+        { "path": "/Volumes/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [
+        { "path": "$HOME/.drawthings_companion" },
+        { "path": "$HOME/.drawthings_companion/**" },
+        { "path": "/Volumes/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        { "path": "$HOME/.drawthings_companion" },
+        { "path": "$HOME/.drawthings_companion/**" },
+        { "path": "$HOME/Library/Containers/com.liuliu.draw-things/**" },
+        { "path": "/Volumes/**" }
+      ]
+    },
     "fs:allow-read-dir",
     "opener:default"
   ]
