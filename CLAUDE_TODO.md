@@ -61,7 +61,7 @@ The application has been refactored from a backend-heavy Rust architecture to a 
 
 
 
-3. ** .ckpt model data uimport to SQLite DB
+3. **.ckpt model data uimport to SQLite DB**
 - [x] 3.1) add main models to SQLite DB
 - [x] 3.2) add LoRA to SQLite DB
 - [ ] 3.3) add controlnet to SQLite DB

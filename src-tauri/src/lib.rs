@@ -1,8 +1,7 @@
-use std::fs;
-use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use serde_json;
-
+use std::fs;
+use std::time::SystemTime;
 
 // ################################################################################
 // # File Metadata Function
@@ -22,35 +21,39 @@ enum MetaResult {
     String(String),
 }
 
-// A function that takes a single filepath as an arguments and; (1) checks the files exists, returns array of filesize, create datetime, update datetime 
+// A function that takes a single filepath as an arguments and; (1) checks the files exists, returns array of filesize, create datetime, update datetime
 #[tauri::command]
 fn meta(filepath: &str, stringify: Option<bool>) -> MetaResult {
     let should_stringify = stringify.unwrap_or(false);
-    
+
     let metadata_result = match fs::metadata(filepath) {
         Ok(metadata) => {
             let size = metadata.len();
-            
-            let created = metadata.created()
+
+            let created = metadata
+                .created()
                 .ok()
                 .and_then(|time| time.duration_since(SystemTime::UNIX_EPOCH).ok())
                 .map(|duration| duration.as_secs())
                 .map(|secs| {
                     let datetime = chrono::DateTime::from_timestamp(secs as i64, 0);
-                    datetime.map(|dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string())
+                    datetime
+                        .map(|dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string())
                         .unwrap_or_else(|| "Invalid timestamp".to_string())
                 });
-            
-            let modified = metadata.modified()
+
+            let modified = metadata
+                .modified()
                 .ok()
                 .and_then(|time| time.duration_since(SystemTime::UNIX_EPOCH).ok())
                 .map(|duration| duration.as_secs())
                 .map(|secs| {
                     let datetime = chrono::DateTime::from_timestamp(secs as i64, 0);
-                    datetime.map(|dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string())
+                    datetime
+                        .map(|dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string())
                         .unwrap_or_else(|| "Invalid timestamp".to_string())
                 });
-            
+
             FileMetadata {
                 exists: true,
                 size: Some(size),
@@ -59,15 +62,13 @@ fn meta(filepath: &str, stringify: Option<bool>) -> MetaResult {
                 error: None,
             }
         }
-        Err(e) => {
-            FileMetadata {
-                exists: false,
-                size: None,
-                created: None,
-                modified: None,
-                error: Some(e.to_string()),
-            }
-        }
+        Err(e) => FileMetadata {
+            exists: false,
+            size: None,
+            created: None,
+            modified: None,
+            error: Some(e.to_string()),
+        },
     };
 
     if should_stringify {
@@ -77,22 +78,24 @@ fn meta(filepath: &str, stringify: Option<bool>) -> MetaResult {
     } else {
         MetaResult::Object(metadata_result)
     }
-}   
+}
 
 // ################################################################################
 // # Greeter Function
 #[tauri::command]
 fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust! (/src-tauri/src/lib.rs)", name)
+    format!(
+        "Hello, {}! You've been greeted from Rust! (/src-tauri/src/lib.rs)",
+        name
+    )
 }
-
-
 
 // ################################################################################
 // # Tauri App Entry Point
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_sql::Builder::default().build())
@@ -101,5 +104,3 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
-

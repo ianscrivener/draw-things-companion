@@ -31,19 +31,22 @@ export function useAppInitialization() {
         setInitialized(true);
         setNeedsSetup(false);
         console.log('[useAppInitialization] App is initialized');
-      } else {
+      }
+      else {
         // No settings.json or not initialized - need setup
         setNeedsSetup(true);
         setInitialized(false);
         console.log('[useAppInitialization] App needs first-run setup');
       }
-    } catch (err) {
+    }
+    catch (err) {
       console.error('Initialization check failed:', err);
       setError(err.message);
       // On error, assume we need setup
       setNeedsSetup(true);
       setInitialized(false);
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -74,11 +77,13 @@ export function useAppInitialization() {
         success: true,
         results: { modelScan, loraScan, controlnetScan },
       };
-    } catch (err) {
+    }
+    catch (err) {
       console.error('Initialization failed:', err);
       setError(err.message);
       return { success: false, error: err.message };
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   };

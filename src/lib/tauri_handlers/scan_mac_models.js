@@ -61,7 +61,8 @@ export async function scan_mac_models(modelType) {
       const jsonContent = await readTextFile(jsonPath);
       jsonData = JSON.parse(jsonContent);
       console.log('[tauri_handler] Found', jsonData.length, 'entries in JSON for type:', modelType);
-    } catch (jsonError) {
+    }
+    catch (jsonError) {
       console.warn('[tauri_handler] Could not read JSON file:', jsonError.message);
       // If JSON doesn't exist, can't determine which files belong to this type
       return {
@@ -128,7 +129,9 @@ export async function scan_mac_models(modelType) {
           const { metadata } = await import('@tauri-apps/plugin-fs');
           const meta = await metadata(filePath);
           fileSize = meta.size;
-        } catch (sizeError) {
+          // xonsole
+        }
+        catch (sizeError) {
           console.warn('[tauri_handler] Could not get file size for:', filename);
         }
 

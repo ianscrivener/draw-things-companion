@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+// import { invoke } from '@tauri-apps/api/core';
 
 // ############################################################################
 /**
@@ -15,8 +15,10 @@ import { invoke } from '@tauri-apps/api/core';
  */
 export async function get_all_logs() {
   try {
-    return await invoke('get_all_logs');
-  } catch (error) {
+    // return await invoke('get_all_logs');
+    return [];
+  }
+  catch (error) {
     console.error('[tauri_handler] get_all_logs error:', error);
     // Return empty array to prevent crashes
     return [];

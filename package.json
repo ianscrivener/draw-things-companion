@@ -16,5 +16,8 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2",
     "next": "^15.5.6"
-    }
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-dialog": "^2.4.2"
+  }
 }

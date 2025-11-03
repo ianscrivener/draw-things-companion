@@ -42,10 +42,10 @@ export async function app_init() {
 
     for (const path of pathsToTry) {
       try {
-        console.log('[tauri_handler] Trying .env at:', path);
+        // console.log('[tauri_handler] Trying .env at:', path);
         envContent = await readTextFile(path);
         envFound = true;
-        console.log('[tauri_handler] Successfully loaded .env file from:', path);
+        // console.log('[tauri_handler] Successfully loaded .env file from:', path);
         break;
       } catch (error) {
         // Continue to next path
@@ -109,14 +109,15 @@ export async function app_init() {
       envConfig.DTC_APP_DIR = `${homePath}/.drawthings_companion`;
     }
 
-    console.log('[tauri_handler] Final env config:', envConfig);
+    // console.log('[tauri_handler] Final env config:', envConfig);
 
     // Try to load settings.json (overrides .env)
     let settingsConfig = {};
     try {
       settingsConfig = await load_settings();
-      console.log('[tauri_handler] Loaded settings.json overrides:', Object.keys(settingsConfig));
-    } catch (error) {
+      // console.log('[tauri_handler] Loaded settings.json overrides:', Object.keys(settingsConfig));
+    }
+    catch (error) {
       console.log('[tauri_handler] No settings.json found or error loading it:', error.message);
     }
 

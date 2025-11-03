@@ -46,10 +46,12 @@ export function useModels(modelType) {
       setModels(allModels);
       setMacModels(mac);
       setStashModels(stash);
-    } catch (err) {
+    }
+    catch (err) {
       setError(err.message || 'Failed to load models');
       console.error('[useModels] Error loading models:', err);
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   }, [modelType]);
@@ -151,11 +153,13 @@ export function useModels(modelType) {
       setHasUnsavedChanges(false);
 
       return { success: true };
-    } catch (err) {
+    }
+    catch (err) {
       setError(err.message || 'Failed to save changes');
       console.error('Error saving changes:', err);
       return { success: false, error: err.message };
-    } finally {
+    }
+    finally {
       setSaving(false);
     }
   }, [saving, pendingChanges, macModels, loadModels]);

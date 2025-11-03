@@ -2,60 +2,106 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "core:path:default",
     {
       "identifier": "fs:allow-read-text-file",
       "allow": [
-        { "path": "$HOME/.drawthings_companion/**" },
-        { "path": "$HOME/Library/Containers/com.liuliu.draw-things/**" },
-        { "path": "/Volumes/**" },
-        { "path": ".env" },
-        { "path": "../.env" },
-        { "path": "../../.env" },
-        { "path": "../../../.env" }
+        {
+          "path": "$HOME/.drawthings_companion/**"
+        },
+        {
+          "path": "$HOME/Library/Containers/com.liuliu.draw-things/**"
+        },
+        {
+          "path": "/Volumes/**"
+        },
+        {
+          "path": ".env"
+        },
+        {
+          "path": "../.env"
+        },
+        {
+          "path": "../../.env"
+        },
+        {
+          "path": "../../../.env"
+        }
       ]
     },
     {
       "identifier": "fs:allow-write-text-file",
       "allow": [
-        { "path": "$HOME/.drawthings_companion/**" },
-        { "path": "/Volumes/**" }
+        {
+          "path": "$HOME/.drawthings_companion/**"
+        },
+        {
+          "path": "/Volumes/**"
+        }
       ]
     },
     {
       "identifier": "fs:allow-mkdir",
       "allow": [
-        { "path": "$HOME/.drawthings_companion" },
-        { "path": "$HOME/.drawthings_companion/**" },
-        { "path": "/Volumes/**" }
+        {
+          "path": "$HOME/.drawthings_companion"
+        },
+        {
+          "path": "$HOME/.drawthings_companion/**"
+        },
+        {
+          "path": "/Volumes/**"
+        }
       ]
     },
     {
       "identifier": "fs:allow-exists",
       "allow": [
-        { "path": "$HOME/.drawthings_companion" },
-        { "path": "$HOME/.drawthings_companion/**" },
-        { "path": "$HOME/Library/Containers/com.liuliu.draw-things/**" },
-        { "path": "/Volumes/**" }
+        {
+          "path": "$HOME/.drawthings_companion"
+        },
+        {
+          "path": "$HOME/.drawthings_companion/**"
+        },
+        {
+          "path": "$HOME/Library/Containers/com.liuliu.draw-things/**"
+        },
+        {
+          "path": "/Volumes/**"
+        }
       ]
     },
     {
       "identifier": "fs:allow-read-dir",
       "allow": [
-        { "path": "$HOME/.drawthings_companion/**" },
-        { "path": "$HOME/Library/Containers/com.liuliu.draw-things/**" },
-        { "path": "/Volumes/**" }
+        {
+          "path": "$HOME/.drawthings_companion/**"
+        },
+        {
+          "path": "$HOME/Library/Containers/com.liuliu.draw-things/**"
+        },
+        {
+          "path": "/Volumes/**"
+        }
       ]
     },
     {
       "identifier": "fs:allow-stat",
       "allow": [
-        { "path": "$HOME/.drawthings_companion/**" },
-        { "path": "$HOME/Library/Containers/com.liuliu.draw-things/**" },
-        { "path": "/Volumes/**" }
+        {
+          "path": "$HOME/.drawthings_companion/**"
+        },
+        {
+          "path": "$HOME/Library/Containers/com.liuliu.draw-things/**"
+        },
+        {
+          "path": "/Volumes/**"
+        }
       ]
     },
     "opener:default",
@@ -63,6 +109,7 @@
     "sql:allow-load",
     "sql:allow-execute",
     "sql:allow-select",
-    "sql:allow-close"
+    "sql:allow-close",
+    "dialog:default"
   ]
 }

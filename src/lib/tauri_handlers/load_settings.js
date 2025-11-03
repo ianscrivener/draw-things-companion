@@ -18,9 +18,10 @@ export async function load_settings() {
       const dtcAppPath = await join(home, '.drawthings_companion', 'settings.json');
       const content = await readTextFile(dtcAppPath);
       const settings = JSON.parse(content);
-      console.log('[tauri_handler] load_settings from DTC_APP_DIR:', dtcAppPath);
+      // console.log('[tauri_handler] load_settings from DTC_APP_DIR:', dtcAppPath);
       return settings;
-    } catch (dtcError) {
+    }
+    catch (dtcError) {
       console.log('[tauri_handler] Settings not found in DTC_APP_DIR, trying STASH_DIR');
     }
 

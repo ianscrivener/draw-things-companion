@@ -26,7 +26,7 @@ import { app_init } from './app_init.js';
  */
 export async function get_models(modelType) {
   try {
-    console.log('[tauri_handler] get_models - starting for type:', modelType);
+    // console.log('[tauri_handler] get_models - starting for type:', modelType);
 
     // Load config to get STASH_DIR
     const config = await app_init();
@@ -80,7 +80,8 @@ export async function get_models(modelType) {
 
     return models;
 
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[tauri_handler] get_models error:', error);
     // Return empty array to prevent crashes
     return [];
