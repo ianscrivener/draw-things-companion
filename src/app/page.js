@@ -16,7 +16,7 @@ import SettingsView from '@/components/views/SettingsView';
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState('models');
-  const { initialized, loading, needsSetup, config, initializeApp } = useAppInitialization();
+  const { loading, needsSetup, config, initializeApp } = useAppInitialization();
 
   const handleNavigate = (section) => {
     setActiveSection(section);
@@ -64,8 +64,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen w-screen">
+
       {/* Body (2 columns) */}
       <div className="flex flex-1 overflow-hidden">
+
         {/* Navigation */}
         <Nav activeItem={activeSection} onNavigate={handleNavigate} />
 
@@ -73,10 +75,12 @@ export default function Home() {
         <div className="flex flex-col flex-1 overflow-hidden bg-gray-50 pb-log-viewer">
           {renderView()}
         </div>
+        
       </div>
 
       {/* Log Viewer Footer */}
       <LogViewer />
+
     </div>
   );
 }

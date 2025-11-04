@@ -1,13 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import * as TauriHandler from '../lib/tauri_handler';
+import {
+  useEffect,
+  useState
+}
+  from "react";
+import * as TauriHandler from "../lib/tauri_handler";
 
-/**
- * Hook to handle first-run initialization of the app
- */
+// ###############################################
+// Hook to handle first-run initialization of the app
+// ###############################################
 export function useAppInitialization() {
-  const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -17,79 +20,76 @@ export function useAppInitialization() {
     checkInitialization();
   }, []);
 
+  // ###############################################
+  // Initialization Check and Setup Functions
   const checkInitialization = async () => {
     try {
+
+      // 1️⃣ show loading state
       setLoading(true);
 
-      // Check if app is initialized by loading settings
+      // 2️⃣ Check if app is initialized by loading settings ⭐️⭐️⭐️⭐️⭐️
       const loadedConfig = await TauriHandler.app_init();
       setConfig(loadedConfig);
 
-      // Check if settings.json exists and has been initialized
-      // If settings.json has 'initialized: true', we're good to go
+      // 3️⃣ Check if settings.json exists and has been initialized
+
+      // 3️⃣1️⃣ If settings.json has 'initialized: true', we're good to go
       if (loadedConfig.initialized === true) {
-        setInitialized(true);
         setNeedsSetup(false);
-        console.log('[useAppInitialization] App is initialized');
+        console.log("[useAppInitialization] App is initialized");
       }
       else {
-        // No settings.json or not initialized - need setup
+        // 3️⃣2️⃣ No settings.json or not initialized - need setup
         setNeedsSetup(true);
-        setInitialized(false);
-        console.log('[useAppInitialization] App needs first-run setup');
+        console.log("[useAppInitialization] App needs first-run setup");
       }
     }
     catch (err) {
-      console.error('Initialization check failed:', err);
+      console.error("Initialization check failed:", err);
       setError(err.message);
+
       // On error, assume we need setup
       setNeedsSetup(true);
-      setInitialized(false);
     }
     finally {
+      // 4️⃣ hide loading state
       setLoading(false);
     }
   };
 
+  // ###############################################
+  // App Initialization Function
   const initializeApp = async (dtBaseDir, stashDir) => {
     try {
+
+      // 1️⃣ Show loading state
       setLoading(true);
       setError(null);
 
-      // Initialize app with directories
-      await TauriHandler.app_first_run(dtBaseDir, stashDir);
-
-      // Scan and import models from Mac
-      const modelScan = await TauriHandler.scan_mac_models('model');
-      const loraScan = await TauriHandler.scan_mac_models('lora');
-      const controlnetScan = await TauriHandler.scan_mac_models('control');
-
-      console.log('Model scan results:', {
-        models: modelScan,
-        loras: loraScan,
-        controlnets: controlnetScan,
-      });
-
-      setInitialized(true);
+      // 2️⃣ Initialize app with directories
+      // Note: Model scanning now happens automatically in app_init()
+      await TauriHandler.app_first_run(dtBaseDir, stashDir); ⭐️⭐️⭐️⭐️⭐️
       setNeedsSetup(false);
-
-      return {
-        success: true,
-        results: { modelScan, loraScan, controlnetScan },
-      };
+      return { success: true };
     }
     catch (err) {
-      console.error('Initialization failed:', err);
+      console.error("Initialization failed:", err);
       setError(err.message);
-      return { success: false, error: err.message };
+      return {
+        success: false,
+        error: err.message
+      };
     }
     finally {
+      // 3️⃣ Hide loading state
       setLoading(false);
     }
   };
 
+  // ###############################################
+  // Return Hook State and Functions
   return {
-    initialized,
     loading,
     error,
     needsSetup,

@@ -1,30 +1,18 @@
 import { load_settings } from './load_settings.js';
+import { scan_mac_models } from './scan_mac_models.js';
 
 // ############################################################################
 /**
- * app_init
+ * load_config
  *
- * Initializes the application by reading configuration from .env file
- * and merging with settings.json (if it exists in stash directory).
+ * Loads configuration from .env file and settings.json without triggering model scan.
+ * This is used internally when we need config but don't want to trigger scanning.
  *
  * Priority: settings.json overrides .env values
  *
- * NOTE: This app ONLY runs in Tauri mode. It is not designed for browser use.
- *
- * Reads the .env file from the project root and parses key-value pairs.
- * Expected .env format:
- *   DT_BASE_DIR=~/Library/Containers/com.liuliu.draw-things/Data/Documents
- *   STASH_DIR=/Volumes/Extreme2Tb/__DrawThings_Stash__
- *   DTC_APP_DIR=~/.drawthings_companion
- *
- * @returns {Promise<Object>} Merged configuration:
- *   {
- *     DT_BASE_DIR: string,     // DrawThings base directory
- *     STASH_DIR: string,       // Stash directory for model backups
- *     DTC_APP_DIR: string      // DrawThings Companion app directory
- *   }
+ * @returns {Promise<Object>} Merged configuration
  */
-export async function app_init() {
+export async function load_config() {
   try {
     const { readTextFile } = await import('@tauri-apps/plugin-fs');
 
@@ -144,7 +132,7 @@ export async function app_init() {
     return config;
 
   } catch (error) {
-    console.error('[tauri_handler] app_init error:', error);
+    console.error('[tauri_handler] load_config error:', error);
 
     // Return default configuration to prevent crashes (with expanded paths)
     const { homeDir } = await import('@tauri-apps/api/path');
@@ -155,5 +143,50 @@ export async function app_init() {
       STASH_DIR: '/Volumes/Extreme2Tb/__DrawThings_Stash__',
       DTC_APP_DIR: `${homePath}/.drawthings_companion`
     };
+  }
+}
+
+// ############################################################################
+/**
+ * app_init
+ *
+ * Initializes the application by loading configuration and scanning models.
+ * This is called on every app start to keep the database in sync.
+ *
+ * @returns {Promise<Object>} Merged configuration
+ */
+export async function app_init() {
+  try {
+    // Load configuration first
+    const config = await load_config();
+
+    // Scan Mac models on every app start to keep database in sync
+    // Only run if we have a valid config (initialized or not)
+    if (config.DT_BASE_DIR && config.STASH_DIR) {
+      console.log('[tauri_handler] Starting model scan on app init...');
+      try {
+        // Pass config to avoid infinite loop
+        const modelScan = await scan_mac_models('model', config);
+        const loraScan = await scan_mac_models('lora', config);
+        const controlnetScan = await scan_mac_models('control', config);
+
+        console.log('[tauri_handler] Model scan completed on init:', {
+          models: modelScan,
+          loras: loraScan,
+          controlnets: controlnetScan,
+        });
+      } catch (scanError) {
+        // Don't block app initialization if scan fails
+        console.error('[tauri_handler] Model scan error during init:', scanError);
+      }
+    } else {
+      console.log('[tauri_handler] Skipping model scan - missing required directories');
+    }
+
+    return config;
+
+  } catch (error) {
+    console.error('[tauri_handler] app_init error:', error);
+    throw error;
   }
 }

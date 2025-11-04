@@ -1,4 +1,4 @@
-import { app_init }   from './app_init.js';
+import { load_config } from './app_init.js';
 
 
 // ############################################################################
@@ -9,6 +9,7 @@ import { app_init }   from './app_init.js';
  * Reads DrawThings JSON files for metadata and display order.
  *
  * @param {string} modelType - Type of model: 'model', 'lora', or 'control'
+ * @param {Object} config - Configuration object with DT_BASE_DIR and STASH_DIR (optional, will load if not provided)
  * @returns {Promise<Object>} Scan results:
  *   {
  *     found: number,      // Number of models found
@@ -17,7 +18,7 @@ import { app_init }   from './app_init.js';
  *     errors: Array       // Any errors encountered
  *   }
  */
-export async function scan_mac_models(modelType) {
+export async function scan_mac_models(modelType, config = null) {
   try {
     console.log('[tauri_handler] scan_mac_models - starting for type:', modelType);
 
@@ -28,8 +29,11 @@ export async function scan_mac_models(modelType) {
       errors: []
     };
 
-    // Load config to get directories
-    const config = await app_init();
+    // Load config if not provided (for backwards compatibility)
+    if (!config) {
+      config = await load_config();
+    }
+
     if (!config.DT_BASE_DIR || !config.STASH_DIR) {
       throw new Error('DT_BASE_DIR or STASH_DIR not configured');
     }
@@ -103,7 +107,7 @@ export async function scan_mac_models(modelType) {
       const jsonEntry = fileInfo.jsonEntry;
 
       try {
-        // Check if already in database
+        // Check if ckpt is already in the database
         const existing = await db.select(
           'SELECT filename FROM ckpt_models WHERE filename = $1',
           [filename]

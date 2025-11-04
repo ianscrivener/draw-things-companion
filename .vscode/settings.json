@@ -1,0 +1,32 @@
+{
+    "editor.dropIntoEditor.preferences": [],
+    "editor.formatOnSave": true,
+    "beautify.config": {
+        "brace_style": "end-expand",
+        "break_chained_methods": true,
+        "comma_first": false,
+        "e4x": false,
+        "editorconfig": false,
+        "end_with_newline": false,
+        "indent_char": " ",
+        "indent_empty_lines": false,
+        "indent_inner_html": false,
+        "indent_scripts": "normal",
+        "indent_size": 4,
+        "indent_with_tabs": false,
+        "jslint_happy": false,
+        "keep_array_indentation": false,
+        "max_preserve_newlines": "3",
+        "operator_position": "before-newline",
+        "preserve_newlines": true,
+        "space_after_anon_function": false,
+        "space_after_named_function": false,
+        "space_before_conditional": true,
+        "space_in_empty_paren": false,
+        "space_in_paren": false,
+        "unescape_strings": false,
+        "unindent_chained_methods": false,
+        "wrap_line_length": "0"
+    },
+    "editor.defaultFormatter": "vsce-toolroom.vscode-beautify"
+}

@@ -1,4 +1,7 @@
-import { invoke } from '@tauri-apps/api/core';
+import {
+  invoke
+}
+  from '@tauri-apps/api/core';
 
 // ############################################################################
 /**
@@ -13,8 +16,12 @@ import { invoke } from '@tauri-apps/api/core';
  */
 export async function add_model_to_mac(modelId, displayOrder) {
   try {
-    return await invoke('add_model_to_mac', { modelId, displayOrder });
-  } catch (error) {
+    return await invoke('add_model_to_mac', {
+      modelId,
+      displayOrder
+    });
+  }
+  catch (error) {
     console.error('[tauri_handler] add_model_to_mac error:', error);
     throw error;
   }

@@ -1,5 +1,5 @@
-import { save_settings } from './save_settings.js';
-import { init_database } from './init_database.js';
+import { save_settings } from "./save_settings.js";
+import { init_database } from "./init_database.js";
 
 // ############################################################################
 /**
@@ -14,25 +14,27 @@ import { init_database } from './init_database.js';
  */
 export async function app_first_run(dtBaseDir, stashDir) {
   try {
-    console.log('[tauri_handler] app_first_run - creating directories and saving settings');
+    console.log(
+      "[tauri_handler] app_first_run - creating directories and saving settings"
+    );
 
     // Save settings to both DTC_APP_DIR and STASH_DIR/App_Data
     const settings = {
       DT_BASE_DIR: dtBaseDir,
       STASH_DIR: stashDir,
       initialized: true,
-      initialized_date: new Date().toISOString()
+      initialized_date: new Date().toISOString(),
     };
 
     await save_settings(settings);
 
     // Initialize database
-    console.log('[tauri_handler] app_first_run - initializing database');
+    console.log("[tauri_handler] app_first_run - initializing database");
     await init_database(stashDir);
 
-    console.log('[tauri_handler] app_first_run completed successfully');
+    console.log("[tauri_handler] app_first_run completed successfully");
   } catch (error) {
-    console.error('[tauri_handler] app_first_run error:', error);
+    console.error("[tauri_handler] app_first_run error:", error);
     throw error;
   }
 }
