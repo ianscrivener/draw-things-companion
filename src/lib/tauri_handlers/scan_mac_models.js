@@ -114,8 +114,13 @@ export async function scan_mac_models(modelType, config = null) {
         );
 
         if (existing.length > 0) {
+          // File already in database - update exists_mac_hd to true and mac_display_order
+          await db.execute(
+            'UPDATE ckpt_models SET exists_mac_hd = true, mac_display_order = $1 WHERE filename = $2',
+            [macDisplayOrder, filename]
+          );
           results.skipped++;
-          console.log(`[tauri_handler] Skipping ${filename} (already in database)`);
+          console.log(`[tauri_handler] Updated ${filename} - marked as exists_mac_hd = true`);
           continue;
         }
 
@@ -171,6 +176,32 @@ export async function scan_mac_models(modelType, config = null) {
           error: fileError.message
         });
       }
+    }
+
+    // Sync: Check for files marked as exists_mac_hd but no longer in DrawThings JSON
+    // This handles deleted files
+    try {
+      const macRecords = await db.select(
+        'SELECT filename FROM ckpt_models WHERE model_type = $1 AND exists_mac_hd = true',
+        [modelType]
+      );
+
+      const jsonFilenames = new Set(filesToImport.map(f => f.filename));
+
+      for (const record of macRecords) {
+        const filename = record.filename;
+
+        // If file is marked as on Mac but NOT in DrawThings JSON, it was deleted
+        if (!jsonFilenames.has(filename)) {
+          await db.execute(
+            'UPDATE ckpt_models SET exists_mac_hd = false, mac_display_order = NULL WHERE filename = $1',
+            [filename]
+          );
+          console.log(`[tauri_handler] Marked ${filename} as exists_mac_hd = false (not in DrawThings JSON)`);
+        }
+      }
+    } catch (syncError) {
+      console.warn('[tauri_handler] Error syncing Mac HD deletions:', syncError.message);
     }
 
     // Close database

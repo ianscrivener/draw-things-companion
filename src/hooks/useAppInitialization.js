@@ -68,8 +68,8 @@ export function useAppInitialization() {
       setError(null);
 
       // 2️⃣ Initialize app with directories
-      // Note: Model scanning now happens automatically in app_init()
-      await TauriHandler.app_first_run(dtBaseDir, stashDir); ⭐️⭐️⭐️⭐️⭐️
+      // Note: Model scanning now happens automatically in app_init() ⭐️⭐️⭐️⭐️⭐️
+      await TauriHandler.app_first_run(dtBaseDir, stashDir);
       setNeedsSetup(false);
       return { success: true };
     }

@@ -1,5 +1,6 @@
 import { load_settings } from './load_settings.js';
 import { scan_mac_models } from './scan_mac_models.js';
+import { scan_stash_models } from './scan_stash_models.js';
 
 // ############################################################################
 /**
@@ -160,20 +161,33 @@ export async function app_init() {
     // Load configuration first
     const config = await load_config();
 
-    // Scan Mac models on every app start to keep database in sync
+    // Scan Mac models AND Stash models on every app start to keep database in sync
     // Only run if we have a valid config (initialized or not)
     if (config.DT_BASE_DIR && config.STASH_DIR) {
       console.log('[tauri_handler] Starting model scan on app init...');
       try {
         // Pass config to avoid infinite loop
+        // Scan Mac HD models first
         const modelScan = await scan_mac_models('model', config);
         const loraScan = await scan_mac_models('lora', config);
         const controlnetScan = await scan_mac_models('control', config);
 
+        // Then scan Stash to mark which models are also in stash
+        const stashModelScan = await scan_stash_models('model', config);
+        const stashLoraScan = await scan_stash_models('lora', config);
+        const stashControlnetScan = await scan_stash_models('control', config);
+
         console.log('[tauri_handler] Model scan completed on init:', {
-          models: modelScan,
-          loras: loraScan,
-          controlnets: controlnetScan,
+          mac: {
+            models: modelScan,
+            loras: loraScan,
+            controlnets: controlnetScan,
+          },
+          stash: {
+            models: stashModelScan,
+            loras: stashLoraScan,
+            controlnets: stashControlnetScan,
+          }
         });
       } catch (scanError) {
         // Don't block app initialization if scan fails

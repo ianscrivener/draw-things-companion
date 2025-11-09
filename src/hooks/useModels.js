@@ -27,13 +27,14 @@ export function useModels(modelType) {
       console.log(`[useModels] Loaded ${allModels.length} ${modelType} models:`, allModels);
 
       // Separate into Mac and Stash lists
-      // Database structure: exists_mac_hd, mac_display_order, filename
+      // Database structure: exists_mac_hd, exists_stash, mac_display_order, filename
+      // NOTE: A model can exist in BOTH Mac HD and Stash simultaneously
       const mac = allModels
         .filter(m => m.exists_mac_hd)
         .sort((a, b) => (a.mac_display_order || 0) - (b.mac_display_order || 0));
 
       const stash = allModels
-        .filter(m => !m.exists_mac_hd)
+        .filter(m => m.exists_stash && !m.exists_mac_hd)  // Only show in stash pane if NOT on Mac
         .sort((a, b) => {
           // Sort by display_name (custom) > display_name_original > filename
           const aName = a.display_name || a.display_name_original || a.filename || '';
@@ -70,9 +71,8 @@ export function useModels(modelType) {
     const updatedModel = { ...model, mac_display_order: newOrder, exists_mac_hd: true };
 
     setMacModels(prev => [...prev, updatedModel]);
-    setStashModels(prev => prev.map(m =>
-      m.filename === modelId ? updatedModel : m
-    ));
+    // Remove from stash pane since it's now on Mac (but still exists_stash = true in DB)
+    setStashModels(prev => prev.filter(m => m.filename !== modelId));
 
     // Deduplicate: remove any previous actions for this model, then add new action
     setPendingChanges(prev => {
@@ -90,9 +90,18 @@ export function useModels(modelType) {
     const updatedModel = { ...model, mac_display_order: null, exists_mac_hd: false };
 
     setMacModels(prev => prev.filter(m => m.filename !== modelId));
-    setStashModels(prev => prev.map(m =>
-      m.filename === modelId ? updatedModel : m
-    ));
+    // Add back to stash pane if it exists in stash
+    if (model.exists_stash) {
+      setStashModels(prev => {
+        const newStash = [...prev, updatedModel];
+        // Re-sort by display name
+        return newStash.sort((a, b) => {
+          const aName = a.display_name || a.display_name_original || a.filename || '';
+          const bName = b.display_name || b.display_name_original || b.filename || '';
+          return aName.localeCompare(bName);
+        });
+      });
+    }
 
     // Deduplicate: remove any previous actions for this model, then add new action
     setPendingChanges(prev => {

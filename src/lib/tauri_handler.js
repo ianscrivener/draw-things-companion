@@ -8,6 +8,7 @@ export { add_model_to_mac } from './tauri_handlers/add_model_to_mac.js';
 export { remove_model_from_mac } from './tauri_handlers/remove_model_from_mac.js';
 export { update_models_order } from './tauri_handlers/update_models_order.js';
 export { scan_mac_models } from './tauri_handlers/scan_mac_models.js';
+export { scan_stash_models } from './tauri_handlers/scan_stash_models.js';
 export { delete_model } from './tauri_handlers/delete_model.js';
 
 // APP INITIALIZATION & SETTINGS MANAGEMENT

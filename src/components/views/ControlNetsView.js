@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import TwoPaneManager from '../TwoPaneManager';
 import { useModels } from '../../hooks/useModels';
 
