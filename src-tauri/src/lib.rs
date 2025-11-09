@@ -93,7 +93,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, meta])
+        .invoke_handler(tauri::generate_handler![meta])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
