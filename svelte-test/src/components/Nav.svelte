@@ -1,8 +1,8 @@
 <script>
+import { Factory, Image, Settings, SquarePen } from "lucide-svelte";
 import { createEventDispatcher } from "svelte";
-import { Image, SquarePen, Factory, Settings } from "lucide-svelte";
 
-export let activeSection = "models";
+export const activeSection = "models";
 
 const dispatch = createEventDispatcher();
 

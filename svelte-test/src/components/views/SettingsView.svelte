@@ -1,6 +1,6 @@
 <script>
+import { Folder, Settings } from "lucide-svelte";
 import { mockConfig } from "../../models.js";
-import { Settings, Folder } from "lucide-svelte";
 import Counter from "../Counter.svelte";
 </script>
 

@@ -1,6 +1,6 @@
 <script>
-import TwoPaneManager from "../TwoPaneManager.svelte";
 import { getModelsByType } from "../../models.js";
+import TwoPaneManager from "../TwoPaneManager.svelte";
 
 const { macModels, stashModels } = getModelsByType("lora");
 </script>

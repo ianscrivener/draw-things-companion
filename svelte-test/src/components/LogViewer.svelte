@@ -1,7 +1,7 @@
 <script>
 import { Clipboard } from "lucide-svelte";
 
-let logs = [
+const logs = [
 	{ timestamp: Date.now(), message: "Application initialized" },
 	{ timestamp: Date.now() + 1000, message: "Loading models from database..." },
 	{ timestamp: Date.now() + 2000, message: "Found 17 models" },

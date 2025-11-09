@@ -1,9 +1,9 @@
 <script>
-import Nav from "./components/Nav.svelte";
 import LogViewer from "./components/LogViewer.svelte";
-import ModelsView from "./components/views/ModelsView.svelte";
-import LoRAsView from "./components/views/LoRAsView.svelte";
+import Nav from "./components/Nav.svelte";
 import ControlNetsView from "./components/views/ControlNetsView.svelte";
+import LoRAsView from "./components/views/LoRAsView.svelte";
+import ModelsView from "./components/views/ModelsView.svelte";
 import SettingsView from "./components/views/SettingsView.svelte";
 
 let activeSection = "models";

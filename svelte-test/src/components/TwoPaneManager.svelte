@@ -1,10 +1,10 @@
 <script>
-import { getDisplayName, formatFileSize } from "../models.js";
-import { HardDrive, Archive, Save, X } from "lucide-svelte";
+import { Archive, HardDrive, Save, X } from "lucide-svelte";
+import { formatFileSize, getDisplayName } from "../models.js";
 
-export let title = "Models";
-export let macModels = [];
-export let stashModels = [];
+export const title = "Models";
+export const macModels = [];
+export const stashModels = [];
 
 let selectedModel = null;
 let showModal = false;
