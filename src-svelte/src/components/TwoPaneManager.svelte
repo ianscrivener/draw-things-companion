@@ -1,23 +1,23 @@
 <script>
-import { Archive, HardDrive, Save, X } from "lucide-svelte";
-import { formatFileSize, getDisplayName } from "../models.js";
+  import { Archive, HardDrive, Save, X } from "lucide-svelte";
+  import { formatFileSize, getDisplayName } from "../models.js";
 
-export const title = "Models";
-export const macModels = [];
-export const stashModels = [];
+  export const title = "Models";
+  export let macModels = [];
+  export let stashModels = [];
 
-let selectedModel = null;
-let showModal = false;
+  let selectedModel = null;
+  let showModal = false;
 
-function handleModelClick(model) {
-	selectedModel = model;
-	showModal = true;
-}
+  function handleModelClick(model) {
+    selectedModel = model;
+    showModal = true;
+  }
 
-function closeModal() {
-	showModal = false;
-	selectedModel = null;
-}
+  function closeModal() {
+    showModal = false;
+    selectedModel = null;
+  }
 </script>
 
 <div class="container">

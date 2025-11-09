@@ -25,7 +25,13 @@
             "icons/icon.ico"
         ]
     },
+
     "build": {
-        "frontendDist": "../svelte-test/dist"
+        "beforeDevCommand": "cd src-svelte && npm run dev",
+        "beforeBuildCommand": "cd src-svelte && npm run build",
+        "devUrl": "http://localhost:5173",
+        "frontendDist": "../src-svelte/dist"
     }
+
+
 }

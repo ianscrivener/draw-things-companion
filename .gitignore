@@ -2,6 +2,8 @@
 
 _src-tauri-old/
 
+__src-deprecated/node_modules
+
 
 # dependencies
 src/node_modules

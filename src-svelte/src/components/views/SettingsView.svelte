@@ -1,7 +1,6 @@
 <script>
 import { Folder, Settings } from "lucide-svelte";
 import { mockConfig } from "../../models.js";
-import Counter from "../Counter.svelte";
 </script>
 
 <div class="container">
@@ -18,8 +17,6 @@ import Counter from "../Counter.svelte";
         <Folder size={20} />
         <h2>Paths & Locations</h2>
       </div>
-
-      <Counter/>
 
       <div class="section-content">
         <div class="setting-item">

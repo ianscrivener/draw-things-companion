@@ -7,7 +7,7 @@ export const activeSection = "models";
 const dispatch = createEventDispatcher();
 
 const navItems = [
-	{ id: "models", icon: Image, label: "Models" },
+	{ id: "models", icon: Image, label: "Modelz" },
 	{ id: "loras", icon: SquarePen, label: "LoRAs" },
 	{ id: "controlnets", icon: Factory, label: "ControlNets" },
 	{ id: "settings", icon: Settings, label: "Settings" },
