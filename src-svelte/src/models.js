@@ -1,9 +1,11 @@
 // Mock data for DrawThings Companion app
+export { settings } from "./models/model_settings.js";
+
 
 export const mockModels = [
 	{
 		filename: "flux1_krea_dev_f16.ckpt",
-		display_name_original: "FLUX.1 [dev] Krea Scriv",
+		display_name_original: "FLUX.1 [dev] Krea Scriv 3337",
 		display_name: null,
 		model_type: "model",
 		file_size: 23800000000,
@@ -217,15 +219,6 @@ export const mockControlNets = [
 		created_at: "2025-01-02T12:00:00Z",
 	},
 ];
-
-export const mockConfig = {
-	DT_BASE_DIR:
-		"/Users/user/Library/Containers/com.liuliu.draw-things/Data/Documents",
-	STASH_DIR: "/Volumes/Extreme2Tb/__DrawThings_Stash__",
-	DTC_APP_DIR: "/Users/user/.drawthings_companion",
-	initialized: true,
-	initialized_date: "2025-01-01T00:00:00Z",
-};
 
 // Helper function to get models by type and location
 export function getModelsByType(modelType) {
