@@ -1,8 +1,8 @@
 <script>
-  import TwoPaneManager from '../TwoPaneManager.svelte';
-  import { getModelsByType } from '../../models.js';
+import TwoPaneManager from "../TwoPaneManager.svelte";
+import { getModelsByType } from "../../models.js";
 
-  const { macModels, stashModels } = getModelsByType('control');
+const { macModels, stashModels } = getModelsByType("control");
 </script>
 
 <TwoPaneManager

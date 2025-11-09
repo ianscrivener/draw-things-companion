@@ -1,13 +1,13 @@
 <script>
-  // let count_data = $state(0)
+// let count_data = $state(0)
 
-  import { count_data } from '../counter.js';
+import { count_data } from "../counter.js";
 
-  // let count = count_data;
+// let count = count_data;
 
-  // const increment = () => {
-  //   count += 1
-  // }
+// const increment = () => {
+//   count += 1
+// }
 </script>
 
 <button type="button">

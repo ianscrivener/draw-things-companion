@@ -1,21 +1,21 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
-  import { Image, SquarePen, Factory, Settings } from 'lucide-svelte';
+import { createEventDispatcher } from "svelte";
+import { Image, SquarePen, Factory, Settings } from "lucide-svelte";
 
-  export let activeSection = 'models';
+export let activeSection = "models";
 
-  const dispatch = createEventDispatcher();
+const dispatch = createEventDispatcher();
 
-  const navItems = [
-    { id: 'models', icon: Image, label: 'Models' },
-    { id: 'loras', icon: SquarePen, label: 'LoRAs' },
-    { id: 'controlnets', icon: Factory, label: 'ControlNets' },
-    { id: 'settings', icon: Settings, label: 'Settings' }
-  ];
+const navItems = [
+	{ id: "models", icon: Image, label: "Models" },
+	{ id: "loras", icon: SquarePen, label: "LoRAs" },
+	{ id: "controlnets", icon: Factory, label: "ControlNets" },
+	{ id: "settings", icon: Settings, label: "Settings" },
+];
 
-  function handleClick(itemId) {
-    dispatch('navigate', itemId);
-  }
+function handleClick(itemId) {
+	dispatch("navigate", itemId);
+}
 </script>
 
 <nav class="nav">

@@ -1,30 +1,30 @@
 <script>
-  import { Clipboard } from 'lucide-svelte';
+import { Clipboard } from "lucide-svelte";
 
-  let logs = [
-    { timestamp: Date.now(), message: 'Application initialized' },
-    { timestamp: Date.now() + 1000, message: 'Loading models from database...' },
-    { timestamp: Date.now() + 2000, message: 'Found 17 models' },
-    { timestamp: Date.now() + 3000, message: 'All processing completed' }
-  ];
+let logs = [
+	{ timestamp: Date.now(), message: "Application initialized" },
+	{ timestamp: Date.now() + 1000, message: "Loading models from database..." },
+	{ timestamp: Date.now() + 2000, message: "Found 17 models" },
+	{ timestamp: Date.now() + 3000, message: "All processing completed" },
+];
 
-  let showModal = false;
+let showModal = false;
 
-  function getLatestMessage() {
-    if (logs.length === 0) return 'Ready';
+function getLatestMessage() {
+	if (logs.length === 0) return "Ready";
 
-    const lastLog = logs[logs.length - 1];
-    const msg = lastLog.message;
-    return msg.length > 60 ? msg.substring(0, 57) + '...' : msg;
-  }
+	const lastLog = logs[logs.length - 1];
+	const msg = lastLog.message;
+	return msg.length > 60 ? msg.substring(0, 57) + "..." : msg;
+}
 
-  function openModal() {
-    showModal = true;
-  }
+function openModal() {
+	showModal = true;
+}
 
-  function closeModal() {
-    showModal = false;
-  }
+function closeModal() {
+	showModal = false;
+}
 </script>
 
 <div class="log-viewer">
