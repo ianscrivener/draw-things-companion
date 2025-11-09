@@ -28,5 +28,8 @@
         "unindent_chained_methods": false,
         "wrap_line_length": "0"
     },
-    "editor.defaultFormatter": "vsce-toolroom.vscode-beautify"
+    "editor.defaultFormatter": "vsce-toolroom.vscode-beautify",
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }

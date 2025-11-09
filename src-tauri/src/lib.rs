@@ -14,6 +14,7 @@ struct FileMetadata {
     error: Option<String>,
 }
 
+// ################################################################################
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
 enum MetaResult {
@@ -21,6 +22,7 @@ enum MetaResult {
     String(String),
 }
 
+// ################################################################################
 // A function that takes a single filepath as an arguments and; (1) checks the files exists, returns array of filesize, create datetime, update datetime
 #[tauri::command]
 fn meta(filepath: &str, stringify: Option<bool>) -> MetaResult {
@@ -80,15 +82,6 @@ fn meta(filepath: &str, stringify: Option<bool>) -> MetaResult {
     }
 }
 
-// ################################################################################
-// # Greeter Function
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!(
-        "Hello, {}! You've been greeted from Rust! (/src-tauri/src/lib.rs)",
-        name
-    )
-}
 
 // ################################################################################
 // # Tauri App Entry Point
