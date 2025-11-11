@@ -15,10 +15,10 @@
 
 |        | Fn Group   | Function Name         | Inputs                                                                       | Relevant Outputs         | Notes                                                                                                                                                 |
 | :----: | ---------- | --------------------- | ---------------------------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1**  | CKPT_RW    | copy_ckpt             | ckpt_filename, source, destination                                           | success bool             | Copy ckpt from Mac to Stash,  or Stash to Mac                                                                                                         |
-| **2**  | CKPT_RW    | delete_ckpt           | mac\|stash, ckpt_filename                                                    | success bool             | Delete ckpt. Extra confirmation step if the ckpt is not in Stash                                                                                      |
-| **3**  | CKPT_RW    | prune_mac             | none                                                                         | success bool             | Copy orphan ckpt from Mac to Stash and delete on Mac                                                                                                  |
-| **4**  | CKPT_RW    | delete_orphans        | none                                                                         | success bool             | Delete ckpts from Stash/Orphans                                                                                                                       |
+| **1**  | CKPT_RW    | copy_ckpt             | ckpt_filename, source, destination                                           | success bool             | Copy ckpt from Mac to Stash,  or Stash to Mac. After 'Mac to Stash' run `prune_mac`                                                                                                         |
+| **2**  | CKPT_RW    | delete_ckpt           | mac\|stash, ckpt_filename                                                    | success bool             | Delete ckpt. Extra confirmation step if the ckpt is not in Stash. Only deletes primary model/lora/control ckpt,                                                                                        |
+| **3**  | CKPT_RW    | prune_mac             | none                                                                         | success bool             | Copy orphan ckpt from Mac to Stash and delete on Mac. Deleting Mac orhans requires checking that each ckpt is not being used by another model                                                                                                  |
+| **4**  | CKPT_RW    | delete_orphans        | mac\|stash                                                                         | success bool             | Delete ckpts from Mac or Stash Orphans.  ba                                                                                                                        |
 |        |            |                       |                                                                              |                          |                                                                                                                                                       |
 | **5**  | CKPT_LS    | is_stashed            | ckpt_filename                                                                | success bool             | Checks if a checkpoint is already in the stash                                                                                                        |
 | **6**  | CKPT_LS    | read_ckpts            | mac\|stash, model\|lora\|control                                             | array objects            | Lists ckpts on the filesystem. Returns an array of objects containing ckpt_filename, file_size & file_date                                            |
@@ -35,7 +35,6 @@
 |        | DATA       | get_settings          | mac\|stash\|parquet, ckpt_filename                                           | ckpt_object              |                                                                                                                                                       |
 |        |            |                       |                                                                              |                          |                                                                                                                                                       |
 |        | INIT       | app_init              | none                                                                         | success bool             | Initiates the app setup                                                                                                                               |
-|        | INIT       | db_init               | none                                                                         | success bool             | (re)Creates CHD B on Mac in xxx                                                                                                                       |
 |        | INIT       | check_setup           | none                                                                         | success bool             | Checks that the application is set up correctly                                                                                                       |
 |        |            |                       |                                                                              |                          |                                                                                                                                                       |
 |        | UPDATES    | check_app_updates     | none                                                                         | success bool             | Checks for updates, updated versions of this application                                                                                              |
@@ -81,13 +80,17 @@
 		"mac": [],
 		"stash": []
 		}
-	"settings":{
-		"DT_BASE_DIR:  "~/Library/Containers/com.liuliu.draw-things/Data/Documents",
-		"STASH_DIR":   "/Volumes/Extreme2Tb/__DrawThings_Stash__",
-		"DTC_APP_DIR": "~/.drawthings_companion"
+	"stash_trash": {
+		"models":[],
+		"loras":[],
+		"controls":[]
+	}, 
+	"settings":{}
 }
 ```
 
 
 **Possible future functionality**
  - DrawThings JSON, 'settings.json' and 'deleted_ckpts.json' versioning - perhaps git
+
+

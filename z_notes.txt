@@ -1,0 +1,42 @@
+
+  1. src-svelte/src/appState.svelte.js - Global Svelte 5 $state store with helper functions
+  2. Settings (2 files):
+    - read_settings.js - Loads and merges .env + settings.json
+    - write_settings.js - Saves to primary + backup locations
+  3. Init (2 files):
+    - check_setup.js - Validates paths and configuration
+    - app_init.js - First-time setup initialization
+  4. Data Read (2 files):
+    - read_json.js - Reads DrawThings JSON files
+    - read_ckpts.js - Scans filesystem for .ckpt files
+  5. Data Query (3 files):
+    - get_type.js - Determines checkpoint type
+    - get_children.js - Finds dependent files (VAE, encoders)
+    - get_parents.js - Finds parent models using a file
+  6. Data Write (3 files):
+    - write_json.js - Writes DrawThings JSON files
+    - set_ckpt.js - Updates checkpoint metadata
+    - reorder_json.js - Changes display order in DrawThings
+  7. Checkpoint Operations (4 files):
+    - copy_ckpt.js - Copies files between Mac/Stash
+    - delete_ckpt.js - Safely deletes with parent checks
+    - prune_mac.js - Moves orphans from Mac to Stash
+    - delete_orphans.js - Bulk delete orphaned files
+  8. Utility (2 files):
+    - is_stashed.js - Checks if file exists in stash
+    - get_disk_space.js - Gets free space via df command
+  9. Updates (2 files):
+    - check_app_updates.js - Checks GitHub releases
+    - check_parquet_updates.js - Downloads model metadata
+
+  Key Implementation Details:
+
+  - In-memory storage: All functions now use the appState object instead of database
+  - Svelte 5: Using modern $state rune for reactivity
+  - Tauri plugins: Leveraging @tauri-apps/plugin-fs, @tauri-apps/plugin-shell, @tauri-apps/plugin-http
+  - Error handling: Consistent error code structure matching your documentation
+  - Logging: Console logging at all key points for debugging
+  - Safety checks: Parent-child relationships, file existence, disk space
+  - Path resolution: Using Tauri's homeDir() for tilde expansion
+
+  All functions follow the comments at the top of each file and maintain the error code standards from your documentation.
