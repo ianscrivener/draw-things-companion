@@ -52,14 +52,14 @@ npm run build            # Build Svelte frontend only
 
 **ALL application logic MUST be in the frontend (JavaScript/Svelte).**
 
-The Rust backend is ONLY for simple pass-through Tauri API calls. All business logic, database operations, file operations, and state management must be implemented in JavaScript.
+The Rust backend is ONLY for simple pass-through Tauri API calls. All business logic, state management, file operations, and data storage must be implemented in JavaScript.
 
 **Frontend Responsibilities:**
 - Business logic (model management, scanning, validation)
-- Database queries using `@tauri-apps/plugin-sql`
+- In-memory data storage using Svelte 5 `$state` rune (NO database)
 - File operations using `@tauri-apps/plugin-fs`
 - Settings management (read/write settings.json)
-- State management (React hooks)
+- State management (Svelte 5 $state rune)
 - Error handling and user feedback
 
 **Backend Responsibilities:**
@@ -67,7 +67,18 @@ The Rust backend is ONLY for simple pass-through Tauri API calls. All business l
 
 ### Application State Management
 
-See [**functions_datasets_app_state.md**](functions_datasets_app_state.md)
+**In-Memory Object Storage:**
+
+This application uses an **in-memory JavaScript object** instead of a database. All checkpoint data, settings, and application state are stored in a global Svelte 5 `$state` object.
+
+- **Location:** `src-svelte/src/appState.svelte.js`
+- **Storage:** All data in RAM, no database
+- **Reactivity:** Svelte 5 `$state` rune provides automatic UI updates
+- **Persistence:** Data loaded from DrawThings JSON files on startup
+
+See [**MEMORY_OBJECT.md**](MEMORY_OBJECT.md) for complete documentation on the in-memory object structure and usage.
+
+See [**functions_datasets_app_state.md**](functions_datasets_app_state.md) for function reference.
 
 
 ### Environment Variables (.env)
@@ -140,41 +151,72 @@ See CLAUDE_NOTES.md section "Critical Bug Fix - Model Type Categorization" for d
 
 ### When Adding Features
 
-1. Implement logic in JavaScript (hooks or components)
-2. Use Tauri plugins directly (`@tauri-apps/plugin-fs`, `@tauri-apps/plugin-sql`)
-3. Test in Tauri mode: `npm run tauri dev`
+1. Implement logic in JavaScript (Svelte components or library functions)
+2. Use Tauri plugins directly (`@tauri-apps/plugin-fs`, `@tauri-apps/plugin-shell`, `@tauri-apps/plugin-http`)
+3. Directly mutate the `appState` object - Svelte automatically handles reactivity
+4. Use helper functions from `appState.svelte.js` (findCkpt, upsertCkpt, removeCkpt, etc.)
+5. Test in Tauri mode: `npm run tauri dev`
 
 
 ### Error Handling Pattern
 
+All library functions follow a consistent return structure:
+
+```javascript
+// Success
+return {
+  code: 0,
+  result: data,
+  error: []
+};
+
+// Failure
+return {
+  code: 1,
+  result: null,
+  error: [{ code: 42, message: 'Error message', details: 'Additional context' }]
+};
+```
+
+**Logging pattern:**
 ```javascript
 try {
-  console.log('[tauri_handler] operation_name - starting');
+  console.log('[function_name] Starting');
   // ... operation ...
-  console.log('[tauri_handler] operation_name - completed');
+  console.log('[function_name] Completed successfully');
+  return { code: 0, result: data, error: [] };
 }
 catch (error) {
-  console.error('[tauri_handler] operation_name error:', error);
-  // Return safe fallback OR throw
+  console.error('[function_name] Unexpected error:', error);
+  return {
+    code: 1,
+    result: null,
+    error: [{ code: 100, message: 'Unknown error', details: error.message }]
+  };
 }
 ```
+
+See [**error_codes.md**](error_codes.md) for complete error code reference.
 <br>
 
 ## Critical Constraints
 
 **DO NOT:**
 1. Write Rust backend logic - only minimal pass-through if absolutely necessary
-2. Save to DT_BASE_DIR - it's DrawThings' directory (read-only)
-3. Use browser-specific code - app runs in Tauri only
-4. Modify .env file - use settings.json for changes
-5. Create new backend invoke() calls - use existing Tauri plugins
-6. Reference old backend code in `_src-tauri-old/` - it's broken
-7. Run `npm run dev` - ALWAYS use `npm run tauri dev`
-8. Test the app yourself - Claude Code cannot run Tauri, user must test
-10. Assume web app compatibility - this is desktop-only
-11. Read documentaiton in `_old_documentation`
-12. Reference old code in `__src-deprecated`
-13. Reference old code in `__src-deprecated-next.js`
+2. Use `@tauri-apps/plugin-sql` - we use in-memory storage, NOT a database
+3. Create database schemas, migrations, or SQL queries
+4. Save to DT_BASE_DIR - it's DrawThings' directory (read-only for us)
+5. Use browser-specific code - app runs in Tauri only
+6. Modify .env file - use settings.json for changes
+7. Create new backend invoke() calls - use existing Tauri plugins
+8. Reference old backend code in `_src-tauri-old/` - it's broken
+9. Run `npm run dev` - ALWAYS use `npm run tauri dev`
+10. Test the app yourself - Claude Code cannot run Tauri, user must test
+11. Assume web app compatibility - this is desktop-only
+12. Read documentation in `_old_documentation`
+13. Reference old code in `__src-deprecated`
+14. Reference old code in `__src-deprecated-next.js`
+15. Reference database-related code in `_old_documentation/data_schema/`
 
 <br>
 
@@ -192,5 +234,7 @@ See: [**logging.md**](logging.md)
 
 ### Additional Documentation
 
-- [**functions_datasets_app_state.md**](functions_datasets_app_state.md)
-- [**logging.md**](logging.md)
+- [**MEMORY_OBJECT.md**](MEMORY_OBJECT.md) - In-memory object structure and Svelte $state usage
+- [**functions_datasets_app_state.md**](functions_datasets_app_state.md) - Function reference
+- [**error_codes.md**](error_codes.md) - Error code reference
+- [**logging.md**](logging.md) - Logging conventions

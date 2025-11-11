@@ -1,12 +1,21 @@
-# README
+# DrawThings Companion
 
-***a companion app for DrawThings: stash models & projects to an external disk to save space on your Mac system disk***
+***A companion app for DrawThings: stash models & projects to an external disk to save space on your Mac system disk***
 
- - manage all DrawThings models; image generation models, LoRAs, ControlNets
- - 'stash' models and projects to an external disk to save space on your main Mac system disk
+## Features
+
+ - Manage all DrawThings models: image generation models, LoRAs, ControlNets
+ - 'Stash' models and projects to an external disk to save space on your main Mac system disk
  - Manage the display order for models
- - (coming soon) Create 'Stash Sets' - group of models and settings, eg 'WAN2.2', 'Flux Full' to stremaline DrawThings menus and save disk space  
+ - (coming soon) Create 'Stash Sets' - group of models and settings, eg 'SDXL', 'Flux Full' to streamline DrawThings menus and save disk space
 
+## Tech Stack
+
+- **Frontend:** Svelte 5 (with $state rune for reactivity)
+- **Backend:** Tauri v2 (Rust - minimal pass-through only)
+- **Storage:** In-memory JavaScript object (no database)
+- **Build:** Vite v7
+- **Target:** macOS desktop only (M-series silicon)
 
 <br>
 

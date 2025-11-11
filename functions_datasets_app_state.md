@@ -2,9 +2,11 @@
 
 
 ### Notes
-1. The app uses the functions below to load 'state' into app memory on app init. State is essentially a combination of JSON file data, directory listings and settings.json stored in memory in a single javascripts object `App_State`
-2. App_State is the Tauri frontend - the Tauri backend does not have any awareness of state. 
-3. A parquet file with all community models is downloaded and may be referred to, usually when trying to figure out orphan ckpts 
+1. The app uses the functions below to load 'state' into app memory on app init. State is essentially a combination of JSON file data, directory listings and settings.json stored in memory in a single JavaScript object `appState` (using Svelte 5 `$state` rune)
+2. **NO DATABASE** - All data is stored in-memory as a reactive JavaScript object. See [MEMORY_OBJECT.md](MEMORY_OBJECT.md) for details.
+3. `appState` is in the Tauri frontend - the Tauri backend does not have any awareness of state
+4. A parquet file with all community models is downloaded and may be referred to, usually when trying to figure out orphan ckpts
+5. **Location:** All functions are in `src-svelte/src/lib/`, organized by function group (ckpt_rw, ckpt_ls, data, init, updates, disk_space, settings) 
 
 ### Function return format
  - return code - 0 for success. 1 for error. May include error code
@@ -62,32 +64,55 @@
 | 11  |  Parquet  |    Stash     |                    | `${config.STASH_DIR}/App_Data/ckpt.parquet`        |
 
 
-### `App_State` - in javascript memory 
+### `appState` - Reactive in-memory object (Svelte 5 $state)
 
+**Location:** `src-svelte/src/appState.svelte.js`
+
+```javascript
+export const appState = $state({
+  // Organized models from DrawThings JSON files
+  mac: {
+    models: [],    // Array of model objects with full metadata
+    loras: [],     // Array of LoRA objects
+    controls: []   // Array of ControlNet objects
+  },
+  stash: {
+    models: [],
+    loras: [],
+    controls: []
+  },
+
+  // Raw filesystem listings
+  ckpts: {
+    mac: [],       // [{ckpt_filename, file_size, file_date}, ...]
+    stash: []
+  },
+
+  // Trash/deleted items
+  stash_trash: {
+    models: [],
+    loras: [],
+    controls: []
+  },
+
+  // Application settings
+  settings: {
+    DT_BASE_DIR: '',
+    STASH_DIR: '',
+    DTC_APP_DIR: '',
+    initialized: false,
+    initialized_date: null
+  }
+});
 ```
-{
-	"mac": {
-		"models":[],
-		"loras":[],
-		"controls":[]
-		},
-	"stash":{
-		"models":[],
-		"loras":[],
-		"controls":[]
-		},
-	"ckpts": {
-		"mac": [],
-		"stash": []
-		}
-	"stash_trash": {
-		"models":[],
-		"loras":[],
-		"controls":[]
-	}, 
-	"settings":{}
-}
-```
+
+**Helper functions available:**
+- `findCkpt(filename)` - Find checkpoint across all locations
+- `getCkptsByTypeAndLocation(location, type)` - Get checkpoints by type/location
+- `upsertCkpt(location, type, ckptData)` - Add or update checkpoint
+- `removeCkpt(location, type, filename)` - Remove checkpoint
+
+See [MEMORY_OBJECT.md](MEMORY_OBJECT.md) for complete documentation.
 
 
 **Possible future functionality**
