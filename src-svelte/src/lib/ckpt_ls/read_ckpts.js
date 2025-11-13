@@ -1,4 +1,6 @@
 /**
+ * TODO: determin clpt type...
+ * 
  * read_ckpts - Lists ckpts on the filesystem
  *
  * @param {string} location - Location (mac|stash)
@@ -27,7 +29,7 @@ import { readDir, stat } from '@tauri-apps/plugin-fs';
 import { appState } from '../../appState.svelte.js';
 
 export async function read_ckpts(location, type) {
-  console.log(`[read_ckpts] Starting - location: ${location}, type: ${type}`);
+  // console.log(`[read_ckpts] Starting - location: ${location}, type: ${type}`);
 
   try {
     // Determine base directory based on location
@@ -48,7 +50,7 @@ export async function read_ckpts(location, type) {
 
     // Construct path to Models directory
     const modelsDir = `${baseDir}/Models`;
-    console.log('[read_ckpts] Scanning directory:', modelsDir);
+    // console.log('[read_ckpts] Scanning directory:', modelsDir);
 
     try {
       // Read directory contents
@@ -59,7 +61,7 @@ export async function read_ckpts(location, type) {
         entry.isFile && entry.name.endsWith('.ckpt')
       );
 
-      console.log(`[read_ckpts] Found ${ckptFiles.length} .ckpt files`);
+      // console.log(`[read_ckpts] Found ${ckptFiles.length} .ckpt files`);
 
       // Get metadata for each file
       const ckptData = await Promise.all(
@@ -73,7 +75,8 @@ export async function read_ckpts(location, type) {
               file_size: fileStats.size,
               file_date: fileStats.mtime ? new Date(fileStats.mtime * 1000).toISOString() : null
             };
-          } catch (statError) {
+          }
+          catch (statError) {
             console.warn(`[read_ckpts] Could not stat file ${entry.name}:`, statError);
             return {
               ckpt_filename: entry.name,
@@ -85,13 +88,15 @@ export async function read_ckpts(location, type) {
       );
 
       console.log(`[read_ckpts] Successfully read ${ckptData.length} checkpoint files`);
+      // console.log(`[read_ckpts] ${JSON.stringify(ckptData[0])}`);
       return {
         code: 0,
         result: ckptData,
         error: []
       };
 
-    } catch (dirError) {
+    }
+    catch (dirError) {
       console.error('[read_ckpts] Directory read error:', dirError);
 
       // Determine specific error type
@@ -117,7 +122,8 @@ export async function read_ckpts(location, type) {
       };
     }
 
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[read_ckpts] Unexpected error:', error);
     return {
       code: 1,

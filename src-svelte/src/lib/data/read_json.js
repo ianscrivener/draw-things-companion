@@ -26,7 +26,7 @@ import { readTextFile } from '@tauri-apps/plugin-fs';
 import { appState } from '../../appState.svelte.js';
 
 export async function read_json(location, type) {
-  console.log(`[read_json] Starting - location: ${location}, type: ${type}`);
+  // console.log(`[read_json] Starting - location: ${location}, type: ${type}`);
 
   try {
     // Map type to correct JSON filename
@@ -64,7 +64,7 @@ export async function read_json(location, type) {
 
     // Construct full path to JSON file
     const jsonPath = `${baseDir}/Models/${filename}`;
-    console.log('[read_json] Reading:', jsonPath);
+    // console.log('[read_json] Reading:', jsonPath);
 
     try {
       // Read the JSON file
@@ -84,14 +84,15 @@ export async function read_json(location, type) {
           };
         }
 
-        console.log(`[read_json] Successfully parsed ${parsedData.length} items`);
+        // console.log(`[read_json] Successfully parsed ${parsedData.length} items`);
         return {
           code: 0,
           result: parsedData,
           error: []
         };
 
-      } catch (parseError) {
+      }
+      catch (parseError) {
         console.error('[read_json] JSON parse error:', parseError);
         return {
           code: 1,
@@ -100,7 +101,8 @@ export async function read_json(location, type) {
         };
       }
 
-    } catch (readError) {
+    }
+    catch (readError) {
       console.error('[read_json] File read error:', readError);
       // Determine if it's a missing file or read error
       if (readError.message && readError.message.includes('No such file')) {
@@ -117,7 +119,8 @@ export async function read_json(location, type) {
       };
     }
 
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[read_json] Unexpected error:', error);
     return {
       code: 1,

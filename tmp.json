@@ -1,0 +1,975 @@
+{
+  "init": {
+    "settings_init": true,
+    "app_init": true,
+    "setup_valid": true,
+    "load_json": {
+      "mac": {
+        "model": true,
+        "lora": true,
+        "control": true
+      },
+      "stash": {
+        "model": true,
+        "lora": true,
+        "control": true
+      }
+    },
+    "get_parquet": true,
+    "cktp_list": {
+      "mac": true,
+      "stash": true
+    }
+  },
+  "settings": {
+    "DT_BASE_DIR": "/Users/ianscrivener/Library/Containers/com.liuliu.draw-things/Data/Documents",
+    "STASH_DIR": "/Volumes/Extreme2Tb/__DrawThings_Stash__",
+    "DTC_APP_DIR": "/Users/ianscrivener/.drawthings_companion",
+    "GITHUB_OWNER": "XXX",
+    "GITHUB_REPO": "YYY",
+    "PARQUET_METADATA_URL": "https://github.com/ianscrivener/drawthings-community-models-extract/raw/refs/heads/main/community-models.parquet",
+    "initialized": true,
+    "initialized_date": "2025-11-03T08:20:37.580Z"
+  },
+  "mac": {
+    "models": [
+      {
+        "name": "Jib Mix Flux v10",
+        "upcast_attention": false,
+        "modifier": "none",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "jibmixflux_v10analogagain_f16.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "hires_fix_scale": 24,
+        "noise_discretization": {
+          "rf": {
+            "_0": {
+              "sigma_min": 0,
+              "condition_scale": 1000,
+              "sigma_max": 1
+            }
+          }
+        },
+        "high_precision_autoencoder": true
+      },
+      {
+        "name": "FLUX.1 Kontext [dev] (5-bit)",
+        "upcast_attention": false,
+        "modifier": "kontext",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "flux_1_kontext_dev_q5p.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "tea_cache_coefficients": [
+          498.65164, -283.78162, 55.85544, -3.820214, 0.26423085
+        ],
+        "hires_fix_scale": 24,
+        "padded_text_encoding_length": 512,
+        "high_precision_autoencoder": true
+      },
+      {
+        "name": "FLUX.1 Fill [dev] (5-bit)",
+        "upcast_attention": false,
+        "modifier": "inpainting",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "flux_1_fill_dev_q5p.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "hires_fix_scale": 24,
+        "padded_text_encoding_length": 128,
+        "high_precision_autoencoder": true
+      },
+      {
+        "name": "flux1-krea-dev",
+        "upcast_attention": false,
+        "modifier": "none",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "flux1_krea_dev_f16.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "hires_fix_scale": 24,
+        "noise_discretization": {
+          "rf": {
+            "_0": {
+              "sigma_min": 0,
+              "sigma_max": 1,
+              "condition_scale": 1000
+            }
+          }
+        },
+        "high_precision_autoencoder": true
+      },
+      {
+        "name": "Flux Qwen SRPO v1.0",
+        "upcast_attention": false,
+        "modifier": "none",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "flux_qwen_srpo_v1.0_f16.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "hires_fix_scale": 24,
+        "noise_discretization": {
+          "rf": {
+            "_0": {
+              "condition_scale": 1000,
+              "sigma_max": 1,
+              "sigma_min": 0
+            }
+          }
+        },
+        "high_precision_autoencoder": true
+      }
+    ],
+    "loras": [
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": 1,
+          "upper_bound": 1
+        },
+        "name": "⭐️Qwen-Image-4steps-v2.0-bf16",
+        "file": "qwen_image_4steps_v2.0_bf16_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": 1,
+          "upper_bound": 1
+        },
+        "name": "⭐️Qwen-Image-8steps-v2.0-bf16",
+        "file": "qwen_image_8steps_v2.0_bf16_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "qwen_image_edit_inpainting",
+        "file": "qwen_image_edit_inpainting_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": 1,
+          "upper_bound": 1
+        },
+        "name": "⭐️Qwen-Image-Lightning-4steps-v2.0-bf16",
+        "file": "qwen_image_lightning_4steps_v2.0_bf16_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": 1,
+          "upper_bound": 1
+        },
+        "name": "⭐️Qwen Image Edit 2509 Lightning 4-Step v1.0",
+        "file": "qwen_image_edit_2509_lightning_4_step_v1.0_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": -1.5,
+          "upper_bound": 2.5
+        },
+        "name": "Qwen Image Edit 1.0 Lightning 8-Step v1.0",
+        "file": "qwen_image_edit_1.0_lightning_8_step_v1.0_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "flux1",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 0.125,
+          "lower_bound": 0.125,
+          "upper_bound": 0.125
+        },
+        "name": "Hyper-FLUX.1-dev-8steps-lora",
+        "file": "hyper_flux.1_dev_8steps_lora_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "flux1",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 0.125,
+          "lower_bound": 0.125,
+          "upper_bound": 0.125
+        },
+        "name": "Hyper-FLUX.1-dev-16steps-lora",
+        "file": "hyper_flux.1_dev_16steps_lora_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "flux1",
+        "is_lo_ha": false,
+        "name": "KREAnsfw",
+        "file": "kreansfw_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "Flux Qwen Image 8 steps",
+        "file": "flux_qwen_image_8_steps_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "flux1",
+        "is_lo_ha": false,
+        "name": "YFG ChatGPT 4o Style v2 e16",
+        "file": "yfg_chatgpt_4o_style_v2_e16_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "jib_qwen_nudity_fix",
+        "file": "jib_qwen_nudity_fix_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "qwen_MCNL_v1.0",
+        "file": "qwen_mcnl_v1.0_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "Qwen-MysticXXX-v1",
+        "file": "qwen_mysticxxx_v1_lora_f16.ckpt",
+        "prefix": ""
+      }
+    ],
+    "controls": [
+      {
+        "preprocessor": "arcface_f16.ckpt",
+        "version": "flux1",
+        "global_average_pooling": false,
+        "type": "pulid",
+        "image_encoder_version": "eva02_l14_336",
+        "ip_adapter_config": {
+          "query_dim": 1024,
+          "grid": 24,
+          "output_dim": 2048,
+          "head_dim": 64,
+          "num_heads": 16,
+          "input_dim": 1024
+        },
+        "image_encoder": "eva02_clip_l14_336_f16.ckpt",
+        "transformer_blocks": [],
+        "name": "PuLID 0.9.1 (FLUX.1 dev)",
+        "file": "pulid_0.9.1_eva02_clip_l14_336_f16.ckpt",
+        "modifier": "shuffle"
+      }
+    ]
+  },
+  "stash": {
+    "models": [
+      {
+        "name": "Jib Mix Flux v10",
+        "upcast_attention": false,
+        "modifier": "none",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "jibmixflux_v10analogagain_f16.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "hires_fix_scale": 24,
+        "noise_discretization": {
+          "rf": {
+            "_0": {
+              "sigma_min": 0,
+              "condition_scale": 1000,
+              "sigma_max": 1
+            }
+          }
+        },
+        "high_precision_autoencoder": true
+      },
+      {
+        "name": "FLUX.1 Kontext [dev] (5-bit)",
+        "upcast_attention": false,
+        "modifier": "kontext",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "flux_1_kontext_dev_q5p.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "tea_cache_coefficients": [
+          498.65164, -283.78162, 55.85544, -3.820214, 0.26423085
+        ],
+        "hires_fix_scale": 24,
+        "padded_text_encoding_length": 512,
+        "high_precision_autoencoder": true
+      },
+      {
+        "name": "FLUX.1 Fill [dev] (5-bit)",
+        "upcast_attention": false,
+        "modifier": "inpainting",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "flux_1_fill_dev_q5p.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "hires_fix_scale": 24,
+        "padded_text_encoding_length": 128,
+        "high_precision_autoencoder": true
+      },
+      {
+        "name": "flux1-krea-dev",
+        "upcast_attention": false,
+        "modifier": "none",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "flux1_krea_dev_f16.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "hires_fix_scale": 24,
+        "noise_discretization": {
+          "rf": {
+            "_0": {
+              "sigma_min": 0,
+              "sigma_max": 1,
+              "condition_scale": 1000
+            }
+          }
+        },
+        "high_precision_autoencoder": true
+      },
+      {
+        "name": "Flux Qwen SRPO v1.0",
+        "upcast_attention": false,
+        "modifier": "none",
+        "guidance_embed": true,
+        "autoencoder": "flux_1_vae_f16.ckpt",
+        "file": "flux_qwen_srpo_v1.0_f16.ckpt",
+        "clip_encoder": "clip_vit_l14_f16.ckpt",
+        "version": "flux1",
+        "prefix": "",
+        "objective": {
+          "u": {
+            "condition_scale": 1000
+          }
+        },
+        "text_encoder": "t5_xxl_encoder_q6p.ckpt",
+        "default_scale": 16,
+        "hires_fix_scale": 24,
+        "noise_discretization": {
+          "rf": {
+            "_0": {
+              "condition_scale": 1000,
+              "sigma_max": 1,
+              "sigma_min": 0
+            }
+          }
+        },
+        "high_precision_autoencoder": true
+      }
+    ],
+    "loras": [
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": 1,
+          "upper_bound": 1
+        },
+        "name": "⭐️Qwen-Image-4steps-v2.0-bf16",
+        "file": "qwen_image_4steps_v2.0_bf16_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": 1,
+          "upper_bound": 1
+        },
+        "name": "⭐️Qwen-Image-8steps-v2.0-bf16",
+        "file": "qwen_image_8steps_v2.0_bf16_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "qwen_image_edit_inpainting",
+        "file": "qwen_image_edit_inpainting_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": 1,
+          "upper_bound": 1
+        },
+        "name": "⭐️Qwen-Image-Lightning-4steps-v2.0-bf16",
+        "file": "qwen_image_lightning_4steps_v2.0_bf16_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": 1,
+          "upper_bound": 1
+        },
+        "name": "⭐️Qwen Image Edit 2509 Lightning 4-Step v1.0",
+        "file": "qwen_image_edit_2509_lightning_4_step_v1.0_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 1,
+          "lower_bound": -1.5,
+          "upper_bound": 2.5
+        },
+        "name": "Qwen Image Edit 1.0 Lightning 8-Step v1.0",
+        "file": "qwen_image_edit_1.0_lightning_8_step_v1.0_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "flux1",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 0.125,
+          "lower_bound": 0.125,
+          "upper_bound": 0.125
+        },
+        "name": "Hyper-FLUX.1-dev-8steps-lora",
+        "file": "hyper_flux.1_dev_8steps_lora_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "flux1",
+        "is_lo_ha": false,
+        "weight": {
+          "value": 0.125,
+          "lower_bound": 0.125,
+          "upper_bound": 0.125
+        },
+        "name": "Hyper-FLUX.1-dev-16steps-lora",
+        "file": "hyper_flux.1_dev_16steps_lora_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "flux1",
+        "is_lo_ha": false,
+        "name": "KREAnsfw",
+        "file": "kreansfw_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "Flux Qwen Image 8 steps",
+        "file": "flux_qwen_image_8_steps_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "flux1",
+        "is_lo_ha": false,
+        "name": "YFG ChatGPT 4o Style v2 e16",
+        "file": "yfg_chatgpt_4o_style_v2_e16_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "jib_qwen_nudity_fix",
+        "file": "jib_qwen_nudity_fix_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "qwen_MCNL_v1.0",
+        "file": "qwen_mcnl_v1.0_lora_f16.ckpt",
+        "prefix": ""
+      },
+      {
+        "version": "qwen_image",
+        "is_lo_ha": false,
+        "name": "Qwen-MysticXXX-v1",
+        "file": "qwen_mysticxxx_v1_lora_f16.ckpt",
+        "prefix": ""
+      }
+    ],
+    "controls": []
+  },
+  "ckpts": {
+    "mac": [
+      {
+        "ckpt_filename": "clip_vit_l14_vision_model_f16.ckpt",
+        "file_size": 610385920,
+        "file_date": "+057722-12-04T21:57:50.000Z"
+      },
+      {
+        "ckpt_filename": "breast_shaper_splendid_droplets_lora_f16.ckpt",
+        "file_size": 26144768,
+        "file_date": "+057720-01-16T01:06:14.000Z"
+      },
+      {
+        "ckpt_filename": "nsfw_flux_lora_v1_lora_f16.ckpt",
+        "file_size": 809041920,
+        "file_date": "+057535-10-03T07:09:33.000Z"
+      },
+      {
+        "ckpt_filename": "eva02_clip_l14_336_f16.ckpt",
+        "file_size": 610250752,
+        "file_date": "+057541-02-26T02:29:06.000Z"
+      },
+      {
+        "ckpt_filename": "controlnet_alimama_inpaint_flux_1_dev_beta_q6p.ckpt",
+        "file_size": 1902637056,
+        "file_date": "+057687-03-20T17:57:40.000Z"
+      },
+      {
+        "ckpt_filename": "hyper_flux.1_dev_8steps_lora_lora_f16.ckpt",
+        "file_size": 27150,
+        "file_date": "+057782-02-01T06:59:20.000Z"
+      },
+      {
+        "ckpt_filename": "steepslopetiddies_v1.2_flux_lora_f16.ckpt",
+        "file_size": 90157056,
+        "file_date": "+057605-06-17T07:39:11.000Z"
+      },
+      {
+        "ckpt_filename": "landingstrip_lora_f16.ckpt",
+        "file_size": 51392512,
+        "file_date": "+057533-07-02T04:49:59.000Z"
+      },
+      {
+        "ckpt_filename": "yfg_chatgpt_4o_style_v2_e16_lora_f16.ckpt",
+        "file_size": 202866688,
+        "file_date": "+057758-08-24T21:32:00.000Z"
+      },
+      {
+        "ckpt_filename": "alimam_flux.1_turbo_alpha_8_step_lora_f16.ckpt",
+        "file_size": 816054272,
+        "file_date": "+057596-07-01T04:40:55.000Z"
+      },
+      {
+        "ckpt_filename": "object_removal_for_flux.1_fill_v2_lora_f16.ckpt",
+        "file_size": 90046464,
+        "file_date": "+057635-01-31T19:42:26.000Z"
+      },
+      {
+        "ckpt_filename": "pulid_0.9.1_eva02_clip_l14_336_f16.ckpt",
+        "file_size": 1143619584,
+        "file_date": "+057541-02-25T16:01:20.000Z"
+      },
+      {
+        "ckpt_filename": "clip_vit_l14_f16.ckpt",
+        "file_size": 331776,
+        "file_date": "+057555-02-22T22:40:23.000Z"
+      },
+      {
+        "ckpt_filename": "arcface_f16.ckpt",
+        "file_size": 138993664,
+        "file_date": "+057541-02-26T04:54:17.000Z"
+      },
+      {
+        "ckpt_filename": "just_the_tits_qwen2.5_lora_f16.ckpt",
+        "file_size": 1413107712,
+        "file_date": "+057683-12-09T01:31:48.000Z"
+      },
+      {
+        "ckpt_filename": "steepslopetiddies_v1_2_rank16_bf16_lora_f16.ckpt",
+        "file_size": 90157056,
+        "file_date": "+057535-10-02T09:51:34.000Z"
+      },
+      {
+        "ckpt_filename": "kreansfw_lora_f16.ckpt",
+        "file_size": 404922368,
+        "file_date": "+057755-12-28T08:25:45.000Z"
+      },
+      {
+        "ckpt_filename": "restoreformer_v1.0_f16.ckpt",
+        "file_size": 145604608,
+        "file_date": "+057533-06-27T22:30:33.000Z"
+      },
+      {
+        "ckpt_filename": "t5_xxl_encoder_q6p.ckpt",
+        "file_size": 364544,
+        "file_date": "+057533-06-22T13:35:30.000Z"
+      },
+      {
+        "ckpt_filename": "skirt_lift_flux_lora_f16.ckpt",
+        "file_size": 26144768,
+        "file_date": "+057605-04-02T14:42:02.000Z"
+      },
+      {
+        "ckpt_filename": "breast_splendid_droplets_lora_f16.ckpt",
+        "file_size": 26144768,
+        "file_date": "+057638-05-31T08:21:49.000Z"
+      },
+      {
+        "ckpt_filename": "jib_qwen_nudity_fix_lora_f16.ckpt",
+        "file_size": 707252224,
+        "file_date": "+057777-07-20T07:32:25.000Z"
+      },
+      {
+        "ckpt_filename": "realesrgan_x2plus_f16.ckpt",
+        "file_size": 33710080,
+        "file_date": "+057538-07-12T10:07:50.000Z"
+      },
+      {
+        "ckpt_filename": "jib_flux_nipple_fix_v0.9_lora_f16.ckpt",
+        "file_size": 26144768,
+        "file_date": "+057533-07-01T13:23:07.000Z"
+      }
+    ],
+    "stash": [
+      {
+        "ckpt_filename": "flux_qwen_srpo_v1.0_f16.ckpt",
+        "file_size": 23857954816,
+        "file_date": "+057758-08-03T06:42:17.000Z"
+      },
+      {
+        "ckpt_filename": "jibmixflux_v10analogagain_f16.ckpt",
+        "file_size": 23857967104,
+        "file_date": "+057539-05-14T12:33:04.000Z"
+      },
+      {
+        "ckpt_filename": "flux_1_fill_dev_q5p.ckpt",
+        "file_size": 9371738112,
+        "file_date": "+057741-02-19T07:49:08.000Z"
+      },
+      {
+        "ckpt_filename": "flux_1_vae_f16.ckpt",
+        "file_size": 167870464,
+        "file_date": "+057533-06-22T08:29:29.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_image_1.0_q6p.ckpt",
+        "file_size": 17629249536,
+        "file_date": "+057594-09-23T00:16:52.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_image_vae_f16.ckpt",
+        "file_size": 254500864,
+        "file_date": "+057594-10-05T08:20:22.000Z"
+      },
+      {
+        "ckpt_filename": "flux1_krea_dev_f16.ckpt",
+        "file_size": 23857954816,
+        "file_date": "+057755-03-18T08:42:14.000Z"
+      },
+      {
+        "ckpt_filename": "clip_vit_l14_vision_model_f16.ckpt",
+        "file_size": 610385920,
+        "file_date": "+057722-12-04T21:57:50.000Z"
+      },
+      {
+        "ckpt_filename": "breast_shaper_splendid_droplets_lora_f16.ckpt",
+        "file_size": 26144768,
+        "file_date": "+057720-01-16T01:06:14.000Z"
+      },
+      {
+        "ckpt_filename": "nsfw_flux_lora_v1_lora_f16.ckpt",
+        "file_size": 809041920,
+        "file_date": "+057535-10-03T07:09:33.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_2.5_vl_7b_vit_f16.ckpt",
+        "file_size": 1531904,
+        "file_date": "+057722-09-03T13:44:51.000Z"
+      },
+      {
+        "ckpt_filename": "controlnet_alimama_inpaint_flux_1_dev_beta_q6p.ckpt",
+        "file_size": 1902637056,
+        "file_date": "+057687-03-20T17:57:40.000Z"
+      },
+      {
+        "ckpt_filename": "jib_nudity_fix_lora_f16.ckpt",
+        "file_size": 27150,
+        "file_date": "+057731-02-16T22:09:17.000Z"
+      },
+      {
+        "ckpt_filename": "hyper_flux.1_dev_8steps_lora_lora_f16.ckpt",
+        "file_size": 27150,
+        "file_date": "+057782-02-01T06:59:20.000Z"
+      },
+      {
+        "ckpt_filename": "steepslopetiddies_v1.2_flux_lora_f16.ckpt",
+        "file_size": 90157056,
+        "file_date": "+057605-06-17T07:39:11.000Z"
+      },
+      {
+        "ckpt_filename": "landingstrip_lora_f16.ckpt",
+        "file_size": 51392512,
+        "file_date": "+057533-07-02T04:49:59.000Z"
+      },
+      {
+        "ckpt_filename": "yfg_chatgpt_4o_style_v2_e16_lora_f16.ckpt",
+        "file_size": 202866688,
+        "file_date": "+057758-08-24T21:32:00.000Z"
+      },
+      {
+        "ckpt_filename": "fluxtastic_v3_lora_f16.ckpt",
+        "file_size": 809041920,
+        "file_date": "+057755-10-01T15:18:41.000Z"
+      },
+      {
+        "ckpt_filename": "flux_realism_lora_lora_f16.ckpt",
+        "file_size": 30101504,
+        "file_date": "+057638-05-10T07:13:57.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_image_edit_inpainting_lora_f16.ckpt",
+        "file_size": 707252224,
+        "file_date": "+057708-06-17T13:15:42.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_image_8steps_v2.0_bf16_lora_f16.ckpt",
+        "file_size": 846954496,
+        "file_date": "+057692-03-03T22:00:28.000Z"
+      },
+      {
+        "ckpt_filename": "alimam_flux.1_turbo_alpha_8_step_lora_f16.ckpt",
+        "file_size": 816054272,
+        "file_date": "+057596-07-01T04:40:55.000Z"
+      },
+      {
+        "ckpt_filename": "object_removal_for_flux.1_fill_v2_lora_f16.ckpt",
+        "file_size": 90046464,
+        "file_date": "+057635-01-31T19:42:26.000Z"
+      },
+      {
+        "ckpt_filename": "flux_srpo_r16_lora_f16.ckpt",
+        "file_size": 202866688,
+        "file_date": "+057749-03-04T07:07:57.000Z"
+      },
+      {
+        "ckpt_filename": "clip_vit_l14_f16.ckpt",
+        "file_size": 331776,
+        "file_date": "+057555-02-22T22:40:23.000Z"
+      },
+      {
+        "ckpt_filename": "just_the_tits_qwen2.5_lora_f16.ckpt",
+        "file_size": 1413107712,
+        "file_date": "+057683-12-09T01:31:48.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_image_edit_2509_lightning_4_step_v1.0_lora_f16.ckpt",
+        "file_size": 846954496,
+        "file_date": "+057747-07-15T20:49:52.000Z"
+      },
+      {
+        "ckpt_filename": "steepslopetiddies_v1_2_rank16_bf16_lora_f16.ckpt",
+        "file_size": 90157056,
+        "file_date": "+057535-10-02T09:51:34.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_image_lightning_4steps_v2.0_bf16_lora_f16.ckpt",
+        "file_size": 846954496,
+        "file_date": "+057725-09-24T21:01:10.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_mcnl_v1.0_lora_f16.ckpt",
+        "file_size": 707252224,
+        "file_date": "+057777-07-20T13:01:51.000Z"
+      },
+      {
+        "ckpt_filename": "kreansfw_lora_f16.ckpt",
+        "file_size": 404922368,
+        "file_date": "+057755-12-28T08:25:45.000Z"
+      },
+      {
+        "ckpt_filename": "restoreformer_v1.0_f16.ckpt",
+        "file_size": 145604608,
+        "file_date": "+057533-06-27T22:30:33.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_image_4steps_v2.0_bf16_lora_f16.ckpt",
+        "file_size": 846954496,
+        "file_date": "+057692-02-26T07:42:44.000Z"
+      },
+      {
+        "ckpt_filename": "flux_qwen_image_8_steps_lora_f16.ckpt",
+        "file_size": 846954496,
+        "file_date": "+057758-08-07T17:42:26.000Z"
+      },
+      {
+        "ckpt_filename": "t5_xxl_encoder_q6p.ckpt",
+        "file_size": 364544,
+        "file_date": "+057533-06-22T13:35:30.000Z"
+      },
+      {
+        "ckpt_filename": "krea_nsfw_lora_f16.ckpt",
+        "file_size": 404922368,
+        "file_date": "+057755-07-07T04:29:28.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_lora_flymy_realism_lora_f16.ckpt",
+        "file_size": 94769152,
+        "file_date": "+057665-06-12T23:38:33.000Z"
+      },
+      {
+        "ckpt_filename": "skirt_lift_flux_lora_f16.ckpt",
+        "file_size": 26144768,
+        "file_date": "+057605-04-02T14:42:02.000Z"
+      },
+      {
+        "ckpt_filename": "breast_splendid_droplets_lora_f16.ckpt",
+        "file_size": 26144768,
+        "file_date": "+057638-05-31T08:21:49.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_2.5_vl_7b_q8p.ckpt",
+        "file_size": 540672,
+        "file_date": "+057594-10-06T07:20:36.000Z"
+      },
+      {
+        "ckpt_filename": "jib_qwen_nudity_fix_lora_f16.ckpt",
+        "file_size": 707252224,
+        "file_date": "+057777-07-20T07:32:25.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_image_edit_2509_bf16_q6p.ckpt",
+        "file_size": 17630584832,
+        "file_date": "+057722-07-30T08:22:23.000Z"
+      },
+      {
+        "ckpt_filename": "flux_dev_lora_antiblur_lora_f16.ckpt",
+        "file_size": 809041920,
+        "file_date": "+057535-10-03T16:05:04.000Z"
+      },
+      {
+        "ckpt_filename": "realesrgan_x2plus_f16.ckpt",
+        "file_size": 33710080,
+        "file_date": "+057538-07-12T10:07:50.000Z"
+      },
+      {
+        "ckpt_filename": "jib_flux_nipple_fix_v0.9_lora_f16.ckpt",
+        "file_size": 26144768,
+        "file_date": "+057533-07-01T13:23:07.000Z"
+      },
+      {
+        "ckpt_filename": "flux_improved_female_nudity_v2_lora_f16.ckpt",
+        "file_size": 187695104,
+        "file_date": "+057535-10-03T10:27:07.000Z"
+      },
+      {
+        "ckpt_filename": "qwen_mysticxxx_v1_lora_f16.ckpt",
+        "file_size": 354361344,
+        "file_date": "+057777-07-20T16:27:13.000Z"
+      },
+      {
+        "ckpt_filename": "flux_1_kontext_dev_q5p.ckpt",
+        "file_size": 9369780224,
+        "file_date": "+057537-03-05T12:20:19.000Z"
+      },
+      {
+        "ckpt_filename": "flux_aphrodite_v1.0_f16.ckpt",
+        "file_size": 15382515712,
+        "file_date": "+057757-05-10T19:46:40.000Z"
+      }
+    ]
+  },
+  "stash_trash": {
+    "models": [],
+    "loras": [],
+    "controls": []
+  }
+}

@@ -27,7 +27,9 @@ import { homeDir } from '@tauri-apps/api/path';
 import { appState } from '../../appState.svelte.js';
 
 export async function read_settings() {
-  console.log('[read_settings] Starting');
+  // console.log('[read_settings] Starting');
+
+  const homePath = await homeDir();
 
   try {
     // Get home directory for path expansion
@@ -48,7 +50,10 @@ export async function read_settings() {
       GITHUB_REPO: 'YYY',
       PARQUET_METADATA_URL: 'https://github.com/ianscrivener/drawthings-community-models-extract/raw/refs/heads/main/community-models.parquet',
       initialized: false,
-      initialized_date: null
+      initialized_date: null,
+      ckpt_types: ["model", "lora", "control"],
+      ckpt_keys_types: ["file", "clip_encoder", "text_encoder", "autoencoder", "image_encoder"]
+
     };
 
     // Expand paths in defaults
@@ -71,8 +76,9 @@ export async function read_settings() {
 
         try {
           userSettings = JSON.parse(settingsContent);
-          console.log('[read_settings] Loaded settings.json');
-        } catch (parseError) {
+          // console.log('[read_settings] Loaded settings.json');
+        }
+        catch (parseError) {
           console.error('[read_settings] JSON parse error:', parseError);
           return {
             code: 1,
@@ -80,10 +86,12 @@ export async function read_settings() {
             error: [{ code: 16, message: 'Settings file invalid JSON', details: parseError.message }]
           };
         }
-      } else {
+      }
+      else {
         console.log('[read_settings] settings.json not found, using .env defaults only');
       }
-    } catch (readError) {
+    }
+    catch (readError) {
       console.warn('[read_settings] Could not read settings.json:', readError);
       // Continue with defaults only
     }
@@ -98,15 +106,20 @@ export async function read_settings() {
     if (userSettings.DT_BASE_DIR) {
       mergedSettings.DT_BASE_DIR = expandPath(userSettings.DT_BASE_DIR);
     }
+
     if (userSettings.STASH_DIR) {
       mergedSettings.STASH_DIR = expandPath(userSettings.STASH_DIR);
     }
+
     if (userSettings.DTC_APP_DIR) {
       mergedSettings.DTC_APP_DIR = expandPath(userSettings.DTC_APP_DIR);
     }
 
     // Update appState with merged settings
     appState.settings = mergedSettings;
+
+    // Update init flag
+    appState.init.settings_init = true;
 
     console.log('[read_settings] Completed successfully');
     return {
@@ -115,7 +128,8 @@ export async function read_settings() {
       error: []
     };
 
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[read_settings] Unexpected error:', error);
     return {
       code: 1,

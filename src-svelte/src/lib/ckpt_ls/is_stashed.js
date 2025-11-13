@@ -17,9 +17,13 @@
  * - Can be used before copy/delete operations for safety checks
  * - Should be fast - just file existence check, no content verification
  */
+
+// ###############################################################################
+// ###############################################################################
 import { exists } from '@tauri-apps/plugin-fs';
 import { appState } from '../../appState.svelte.js';
 
+// ###############################################################################
 export async function is_stashed(ckpt_filename) {
   console.log(`[is_stashed] Checking: ${ckpt_filename}`);
 

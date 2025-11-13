@@ -19,15 +19,18 @@
  * - Parquet files contain model info (names, categories, tags, etc.)
  * - Used as fallback/reference when model not in DrawThings JSON
  */
-import { fetch, ResponseType } from '@tauri-apps/plugin-http';
-import { writeFile, exists } from '@tauri-apps/plugin-fs';
+// import { fetch } from '@tauri-apps/plugin-http';
+// import { writeFile, exists } from '@tauri-apps/plugin-fs';
+
+import { Command } from '@tauri-apps/plugin-shell';
+
 import { appState } from '../../appState.svelte.js';
 
+
 export async function check_parquet_updates() {
-  console.log('[check_parquet_updates] Starting');
 
   try {
-    const { PARQUET_METADATA_URL, DTC_APP_DIR } = appState.settings;
+    const { PARQUET_METADATA_URL, DTC_APP_DIR, STASH_DIR } = appState.settings;
 
     if (!PARQUET_METADATA_URL) {
       console.error('[check_parquet_updates] Parquet URL not configured');
@@ -47,58 +50,27 @@ export async function check_parquet_updates() {
       };
     }
 
-    const localPath = `${DTC_APP_DIR}/community-models.parquet`;
+    const localPath = `${STASH_DIR}/App_Data/community-models.parquet`;
 
-    console.log('[check_parquet_updates] Checking for updates from:', PARQUET_METADATA_URL);
+    console.log('[check_parquet_updates] Checking for updates from:', PARQUET_METADATA_URL, 'Save parquet to:', localPath);
 
-    try {
-      // Fetch parquet file
-      const response = await fetch(PARQUET_METADATA_URL, {
-        method: 'GET',
-        responseType: ResponseType.Binary
-      });
+    const command = Command.create('wget', ['--no-clobber', '--no-cache', '-O', localPath, PARQUET_METADATA_URL]);
 
-      if (!response.ok) {
-        console.error('[check_parquet_updates] Download failed:', response.status);
-        return {
-          code: 1,
-          result: null,
-          error: [{ code: 51, message: 'Download failed', details: `HTTP ${response.status}` }]
-        };
-      }
+    command.on('close', data => {
+      console.log(`command finished with code ${data.code} and signal ${data.signal}`)
+    });
 
-      const fileData = await response.bytes();
+    command.on('error', error => console.error(`command error: "${error}"`));
+    command.stdout.on('data', line => console.log(`command stdout: "${line}"`));
+    command.stderr.on('data', line => console.log(`command stderr: "${line}"`));
 
-      // Write to local file
-      try {
-        await writeFile(localPath, fileData);
-        console.log('[check_parquet_updates] Parquet file downloaded successfully');
+    const child = await command.execute();
+    console.log(child.stderr);
 
-        return {
-          code: 0,
-          result: { success: true, has_update: true },
-          error: []
-        };
+    appState.init.get_parquet = true;
 
-      } catch (writeError) {
-        console.error('[check_parquet_updates] Write error:', writeError);
-        return {
-          code: 1,
-          result: null,
-          error: [{ code: 8, message: 'File write error', details: writeError.message }]
-        };
-      }
-
-    } catch (fetchError) {
-      console.error('[check_parquet_updates] Fetch error:', fetchError);
-      return {
-        code: 1,
-        result: null,
-        error: [{ code: 49, message: 'Network connection failed', details: fetchError.message }]
-      };
-    }
-
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[check_parquet_updates] Unexpected error:', error);
     return {
       code: 1,

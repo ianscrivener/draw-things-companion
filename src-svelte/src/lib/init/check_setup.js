@@ -50,13 +50,15 @@ export async function check_setup() {
     // Check DTC_APP_DIR
     if (!settings.DTC_APP_DIR) {
       errors.push({ code: 18, message: 'DT_BASE_DIR not configured' });
-    } else {
+    }
+    else {
       try {
         const dtcAppDirExists = await exists(settings.DTC_APP_DIR);
         if (!dtcAppDirExists) {
           errors.push({ code: 11, message: 'Directory not found', details: `DTC_APP_DIR: ${settings.DTC_APP_DIR}` });
         }
-      } catch (error) {
+      }
+      catch (error) {
         errors.push({ code: 11, message: 'Directory not found', details: `Cannot access DTC_APP_DIR: ${error.message}` });
       }
     }
@@ -64,13 +66,15 @@ export async function check_setup() {
     // Check DT_BASE_DIR (DrawThings directory)
     if (!settings.DT_BASE_DIR) {
       errors.push({ code: 18, message: 'DT_BASE_DIR not configured' });
-    } else {
+    }
+    else {
       try {
         const dtBaseDirExists = await exists(settings.DT_BASE_DIR);
         if (!dtBaseDirExists) {
           errors.push({ code: 22, message: 'DT_BASE_DIR not accessible', details: settings.DT_BASE_DIR });
         }
-      } catch (error) {
+      }
+      catch (error) {
         errors.push({ code: 22, message: 'DT_BASE_DIR not accessible', details: error.message });
       }
     }
@@ -78,13 +82,15 @@ export async function check_setup() {
     // Check STASH_DIR (optional, but warn if not configured)
     if (!settings.STASH_DIR) {
       errors.push({ code: 19, message: 'STASH_DIR not configured' });
-    } else {
+    }
+    else {
       try {
         const stashDirExists = await exists(settings.STASH_DIR);
         if (!stashDirExists) {
           errors.push({ code: 23, message: 'STASH_DIR not accessible', details: settings.STASH_DIR });
         }
-      } catch (error) {
+      }
+      catch (error) {
         errors.push({ code: 23, message: 'STASH_DIR not accessible', details: error.message });
       }
     }
@@ -105,13 +111,15 @@ export async function check_setup() {
     }
 
     console.log('[check_setup] Setup validation passed');
+    appState.init.setup_valid = true;
     return {
       code: 0,
       result: true,
       error: []
     };
 
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[check_setup] Unexpected error:', error);
     return {
       code: 1,

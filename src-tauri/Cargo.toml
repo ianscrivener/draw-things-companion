@@ -28,3 +28,5 @@ tauri-plugin-fs = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 chrono = { version = "0.4", features = ["serde"] }
 tauri-plugin-dialog = "2"
+tauri-plugin-http = "2"
+

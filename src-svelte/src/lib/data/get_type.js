@@ -26,13 +26,14 @@ import { findCkpt } from '../../appState.svelte.js';
 import { read_json } from './read_json.js';
 
 export async function get_type(ckpt_filename) {
-  console.log(`[get_type] Starting for: ${ckpt_filename}`);
+  console.log(`[get_type 1] Starting for: ${ckpt_filename}`);
 
   try {
     // First, check in-memory object (fastest)
     const ckpt = findCkpt(ckpt_filename);
+
     if (ckpt && ckpt.model_type) {
-      console.log(`[get_type] Found in memory: ${ckpt.model_type}`);
+      console.log(`[get_type 2] ${ckpt_filename} - Found in memory: ${ckpt.model_type}`);
       return {
         code: 0,
         result: ckpt.model_type,
@@ -49,13 +50,14 @@ export async function get_type(ckpt_filename) {
         const jsonResult = await read_json(location, type);
 
         if (jsonResult.code === 0 && jsonResult.result) {
+
           // Search for the filename in this JSON array
           const found = jsonResult.result.find(item =>
             item.file === ckpt_filename || item.filename === ckpt_filename
           );
 
           if (found) {
-            console.log(`[get_type] Found in ${location} ${type} JSON`);
+            console.log(`[get_type 3] ${ckpt_filename} - Found in ${location} ${type} JSON`);
             return {
               code: 0,
               result: type,
@@ -67,18 +69,19 @@ export async function get_type(ckpt_filename) {
     }
 
     // Not found in any JSON files
-    console.log('[get_type] Type unknown - not found in any source');
+    console.log(`[get_type 4] ${ckpt_filename} - Type unknown`);
     return {
-      code: 1,
-      result: null,
+      code: 0,
+      result: "unknown",
       error: [{ code: 29, message: 'Model type unknown', details: `Checkpoint ${ckpt_filename} not found in any JSON files` }]
     };
 
-  } catch (error) {
-    console.error('[get_type] Unexpected error:', error);
+  }
+  catch (error) {
+    console.error(`[get_type 5] ${ckpt_filename} - Unexpected error:`, error);
     return {
-      code: 1,
-      result: null,
+      code: 0,
+      result: "unknown",
       error: [{ code: 100, message: 'Unknown error', details: error.message }]
     };
   }

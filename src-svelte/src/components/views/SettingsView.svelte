@@ -1,7 +1,30 @@
 <script>
 import { Folder, Settings } from "lucide-svelte";
 import { settings } from "../../models.js";
+import { appState } from '../../appState.svelte.js';
+
+import { Highlight } from 'svelte-highlight';
+import json from "svelte-highlight/languages/json";
+import 'highlight.js/styles/github.css'; // Import a theme stylesheet
+import atelierCaveLight from "svelte-highlight/styles/atelier-cave-light";
+
+const init = appState;
+
+// let json_str = JSON.stringify(settings, null, 2);
+
+
+
+const format_json = function(jsonObj) {
+  let j =JSON.stringify(jsonObj, null, 2);
+  return j;
+};
+
 </script>
+
+<svelte:head>
+  {@html atelierCaveLight}
+</svelte:head>
+
 
 <div class="container">
   <div class="header">
@@ -54,13 +77,18 @@ import { settings } from "../../models.js";
         </div>
 
 
+        <div class="setting-item">
+            <Highlight language={json} code={format_json(appState)} /> 
+        </div>      
+
       </div>
     </div>
   </div>
 </div>
 
 <style>
-  .container {
+
+.container {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -130,6 +158,7 @@ import { settings } from "../../models.js";
     /* align-items: left; */
     padding: 16px 24px;
     border-bottom: 1px solid #f3f4f6;
+    font-size: 11px;
   }
 
   .setting-item:last-child {
@@ -182,6 +211,13 @@ import { settings } from "../../models.js";
     padding: 8px 12px;
 
   }
+  .readonly-value pre {
+    font-size: 11px;
+    color: #000;
+    font-family: monospace;
+    padding: 8px 12px;
+
+  }
 
   .btn-browse {
     padding: 8px 16px;
@@ -204,4 +240,5 @@ import { settings } from "../../models.js";
     opacity: 0.5;
     cursor: not-allowed;
   }
-</style>
+
+  </style>
