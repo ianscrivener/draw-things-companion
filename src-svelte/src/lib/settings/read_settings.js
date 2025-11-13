@@ -51,8 +51,9 @@ export async function read_settings() {
       PARQUET_METADATA_URL: 'https://github.com/ianscrivener/drawthings-community-models-extract/raw/refs/heads/main/community-models.parquet',
       initialized: false,
       initialized_date: null,
+      locations: ["mac", "stash"],
       ckpt_types: ["model", "lora", "control"],
-      ckpt_keys_types: ["file", "clip_encoder", "text_encoder", "autoencoder", "image_encoder"]
+      ckpt_keys_types: ["file", "clip_encoder", "text_encoder", "autoencoder", "image_encoder", "preprocessor"]
 
     };
 

@@ -21,6 +21,7 @@
     "vite": "^7.1.7"
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.30.0",
     "@formkit/drag-and-drop": "^0.5.3",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-dialog": "^2.4.0",

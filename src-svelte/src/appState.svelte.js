@@ -61,8 +61,9 @@ export let appState = $state({
 		DTC_APP_DIR: "",
 		initialized: false,
 		initialized_date: null,
+		locations: ["mac", "stash"],
 		ckpt_types: ["model", "lora", "control"],
-		ckpt_keys_types: ["file", "clip_encoder", "text_encoder", "autoencoder", "image_encoder"]
+		ckpt_keys_types: ["file", "clip_encoder", "text_encoder", "autoencoder", "image_encoder", "preprocessor"]
 	},
 
 	// Organized models/loras/controls from DrawThings JSON files

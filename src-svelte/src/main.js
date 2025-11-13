@@ -19,6 +19,7 @@ export default app;
 
 let jsonObj;
 
+
 // ################################################################################
 await app_init();
 
@@ -79,17 +80,36 @@ let filename = "qwen_image_1.0_q6p.ckpt";
 // jsonObj = await get_children(filename);
 // console.log(`[main.js] get_children ${JSON.stringify(jsonObj)}`)
 
-jsonObj = await findCkpt(filename);
-console.log(`[main.js] get_children2 ${JSON.stringify(jsonObj)}`)
+// jsonObj = await findCkpt(filename);
+// console.log(`[main.js] get_children2 ${JSON.stringify(jsonObj)}`)
+
+
+// traverse the tree
+// get_children
+// get_parents
+appState.settings.locations.forEach(store => {
+	appState.settings.ckpt_types.forEach(mdl => {
+		appState[store][`${mdl}s`].forEach(xxx => {
+			appState.settings.ckpt_keys_types.forEach(async (key_type, i) => {
+				console.log(`${store} | ${mdl}s | ${key_type} | ${i} - `, appState[store][`${mdl}s`][i][key_type]);
+				// if (appState[store][`${ mdl }s`][key_type]) {
+				// 	console.log(`[main.js] key_type ${ key_type } : ${ appState[store][`${mdl}s`][key_type] }`);
+				// }
+			});
+		});
+	});
+});
+
+
 
 // jsonObj = appState.mac.models.forEach(xxx => {
-// 	console.log(`[main.js] Mac model: ${xxx.file}`);
+// 	console.log(`[main.js] Mac model: ${ xxx.file }`);
 // });
 // jsonObj = appState.mac.loras.forEach(xxx => {
-// 	console.log(`[main.js] Mac lora: ${xxx.file}`);
+// 	console.log(`[main.js] Mac lora: ${ xxx.file }`);
 // });
 // jsonObj = appState.mac.controls.forEach(xxx => {
-// 	console.log(`[main.js] Mac control: ${xxx.file}`);
+// 	console.log(`[main.js] Mac control: ${ xxx.file }`);
 // });
 
 
@@ -101,7 +121,7 @@ console.log(`[main.js] get_children2 ${JSON.stringify(jsonObj)}`)
 // 		let ckpt_type = await get_type(res.result[i].ckpt_filename);
 // 		let j = i + 1;
 
-// 		console.log(`[main.js] Processing CKPT ${j}/${res.result.length} : ${res.result[i].ckpt_filename} - type: ${ckpt_type.result}`);
+// 		console.log(`[main.js] Processing CKPT ${ j } / ${ res.result.length } : ${ res.result[i].ckpt_filename } - type: ${ ckpt_type.result }`);
 
 // 		if (ckpt_type.code === 0) {
 // 			console.log('[main.js] ');
@@ -114,10 +134,10 @@ console.log(`[main.js] get_children2 ${JSON.stringify(jsonObj)}`)
 // 			else if (ckpt_type.result === "control") {
 // 				appState.mac.controls.push(ckpt);
 // 			}
-// 			console.log(`[main.js] Processing CKPT ${j}/${res.result.length} : ${res.result[i].ckpt_filename} - type: ${ckpt_type.result}`);
+// 			console.log(`[main.js] Processing CKPT ${ j } / ${ res.result.length } : ${ res.result[i].ckpt_filename } - type: ${ ckpt_type.result }`);
 // 		}
 // 		else {
-// 			console.log(`[main.js] Processing CKPT ${j}/${res.result.length} : ${res.result[i].ckpt_filename} - error determining model type`);
+// 			console.log(`[main.js] Processing CKPT ${ j } / ${ res.result.length } : ${ res.result[i].ckpt_filename } - error determining model type`);
 // 		}
 // 	}
 // }
