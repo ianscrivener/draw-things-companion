@@ -7,6 +7,14 @@
     "core:default",
     "core:path:default",
     {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        {
+          "path": "$HOME/.drawthings_companion/**"
+        }
+      ]
+    },
+    {
       "identifier": "fs:allow-read-text-file",
       "allow": [
         {
