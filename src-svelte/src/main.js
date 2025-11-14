@@ -2,160 +2,183 @@ import "./app.css";
 import { mount } from "svelte";
 import App from "./App.svelte";
 
-import { appState, findCkpt } from './appState.svelte.js';
+// for assets(resources) served via rust
+// import { resolveResource, appDataDir, appLocalDataDir, dataDir, localDataDir, resourceDir } from '@tauri-apps/api/path';
+import { readFile, readTextFile, exists } from '@tauri-apps/plugin-fs';
+import { resourceDir, resolveResource, appDataDir, appLocalDataDir, localDataDir, dataDir } from '@tauri-apps/api/path';
 
-import { app_init } from "./lib/init/app_init.js";
-import { check_setup } from "./lib/init/check_setup";
-import { read_ckpts } from "./lib/ckpt_ls/read_ckpts";
-import { get_type } from "./lib/data/get_type.js";
-import { read_json } from "./lib/data/read_json";
-import { check_parquet_updates } from "./lib/updates/check_parquet_updates.js";
-import { get_children } from "./lib/data/get_children";
-import { get_parents } from "./lib/data/get_parents";
+import DuckDB from './DuckDB.js';
+
+// import { appState, findCkpt } from './appState.svelte.js';
+// import { app_init } from "./lib/init/app_init.js";
+// import { check_setup } from "./lib/init/check_setup";
+// import { read_ckpts } from "./lib/ckpt_ls/read_ckpts";
+// import { get_type } from "./lib/data/get_type.js";
+// import { read_json } from "./lib/data/read_json";
+// import { check_parquet_updates } from "./lib/updates/check_parquet_updates.js";
+// import { get_children } from "./lib/data/get_children";
+// import { get_parents } from "./lib/data/get_parents";
 
 const app = mount(App, { target: document.getElementById("app") });
 
 export default app;
 
-let jsonObj;
+// ###############################################################################
+// ###############################################################################
+// Test parquet read
+
+// console.log('resourceDir:', await resourceDir());
+// console.log('appDataDir:', await appDataDir());
+// console.log('appLocalDataDir:', await appLocalDataDir());
+// console.log('dataDir:', await dataDir());
+// console.log('localDataDir:', await localDataDir());
+
+// // Fetch a remote Parquet file and convert its content to a Uint8Array
+// const res = await fetch('https://origin/remote.parquet');
+// const buffer = new Uint8Array(await res.arrayBuffer());
+// // Register the buffer as a virtual file named 'buffer.parquet'
+// await db.registerFileBuffer('buffer.parquet', buffer);
+// // Now you can query the data using SQL
+// const result = await c.query(`SELECT * FROM 'buffer.parquet'`);
+// console.log(result.toArray());
+
+// ###############################################################################
+import * as duckdb from '@duckdb/duckdb-wasm';
+import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
+import mvp_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
+import duckdb_wasm_next from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
+import eh_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
+
+// ###############################################################################
+try {
 
 
-// ################################################################################
-await app_init();
+	let csv_path = "/Users/ianscrivener/.drawthings_companion/community-models.csv";
+	const file_exists = await exists(csv_path);
 
-// ################################################################################
-await check_setup();
-
-
-// ################################################################################
-// read JSON models for Mac
-
-for (const item of appState.settings.ckpt_types) {
-	jsonObj = await read_json("mac", item);
-	if (jsonObj.code === 0) {
-		appState.mac[`${item}s`] = jsonObj.result;
-		appState.init.load_json.mac[item] = true;
+	// fail
+	if (!file_exists) {
+		console.error('CSV file does not exist, aborting test.');
 	}
-}
-// ################################################################################
-// read JSON models for Stash
 
-for (const item of appState.settings.ckpt_types) {
-	jsonObj = await read_json("stash", item);
-	if (jsonObj.code === 0) {
-		appState.stash[`${item}s`] = jsonObj.result;
-		appState.init.load_json.stash[item] = true;
-	}
-}
+	// success
+	else {
 
-// ################################################################################
-// read Parquet
-await check_parquet_updates();
+		const conn = await DuckDB.connect();
+		console.log('DuckDB connection established successfully.');
 
 
-// ################################################################################
-// list ckpt files for Mac
-for (const item of appState.settings.ckpt_types) {
-	jsonObj = await read_ckpts("mac", item);
-	if (jsonObj.code === 0) {
-		console.log(`[main.js] read_ckpts mac models - count: ${jsonObj.result.length} - success: ${jsonObj.code === 0}`);
-		appState.ckpts.mac = jsonObj.result;
-		appState.init.cktp_list.mac = true;
-	}
-}
-
-// ################################################################################
-// list ckpt files for Mac
-for (const item of appState.settings.ckpt_types) {
-	jsonObj = await read_ckpts("stash", item);
-	if (jsonObj.code === 0) {
-		console.log(`[main.js] read_ckpts stash models - count: ${jsonObj.result.length} - success: ${jsonObj.code === 0}`);
-		appState.ckpts.stash = jsonObj.result;
-		appState.init.cktp_list.stash = true;
-	}
-}
-
-let filename = "qwen_image_1.0_q6p.ckpt";
-
-// jsonObj = await get_children(filename);
-// console.log(`[main.js] get_children ${JSON.stringify(jsonObj)}`)
-
-// jsonObj = await findCkpt(filename);
-// console.log(`[main.js] get_children2 ${JSON.stringify(jsonObj)}`)
-
-
-// traverse the tree
-// get_children
-// get_parents
-appState.settings.locations.forEach(store => {
-	appState.settings.ckpt_types.forEach(mdl => {
-		appState[store][`${mdl}s`].forEach(xxx => {
-			appState.settings.ckpt_keys_types.forEach(async (key_type, i) => {
-				console.log(`${store} | ${mdl}s | ${key_type} | ${i} - `, appState[store][`${mdl}s`][i][key_type]);
-				// if (appState[store][`${ mdl }s`][key_type]) {
-				// 	console.log(`[main.js] key_type ${ key_type } : ${ appState[store][`${mdl}s`][key_type] }`);
-				// }
+		// read the CSV
+		const data = await readTextFile(csv_path)
+			.then((content) => {
+				console.log(`CSV file exists:`, file_exists, ' - Filesize:', content.length);
+				return content;
+			})
+			.catch((err) => {
+				console.error('Error reading CSV file:', err);
+				return null;
 			});
-		});
-	});
-});
 
 
 
-// jsonObj = appState.mac.models.forEach(xxx => {
-// 	console.log(`[main.js] Mac model: ${ xxx.file }`);
-// });
-// jsonObj = appState.mac.loras.forEach(xxx => {
-// 	console.log(`[main.js] Mac lora: ${ xxx.file }`);
-// });
-// jsonObj = appState.mac.controls.forEach(xxx => {
-// 	console.log(`[main.js] Mac control: ${ xxx.file }`);
-// });
+		// Register as virtual file
+		await DuckDB.registerFileText('community-models.csv', data)
+		console.log('CSV file registered successfully.');
+
+
+		// Query it
+		const result = await conn.query("SELECT * FROM 'community-models.csv' LIMIT 10;")
+		// console.log('CSV model count query result:', res.toArray());
+
+		// Convert to plain JavaScript objects
+		const rows = result.toArray().map(row => row.toJSON());
+		console.log(rows);
+
+		await conn.close();
+		console.log('DuckDB connection closed.');
+	}
+}
+catch (error) {
+	console.error('Error reading CSV file:', error);
+}
 
 
 
+// ###############################################################################
 
-// if (res.code === 0) {
-// 	for (let i = 0; i < res.result.length; i++) {
+// try {
 
-// 		let ckpt_type = await get_type(res.result[i].ckpt_filename);
-// 		let j = i + 1;
+// 	let json_path = "/Users/ianscrivener/Library/Containers/com.liuliu.draw-things/Data/Documents/Models/custom.json";
+// 	const file_exists = await exists(json_path);
 
-// 		console.log(`[main.js] Processing CKPT ${ j } / ${ res.result.length } : ${ res.result[i].ckpt_filename } - type: ${ ckpt_type.result }`);
+// 	// fail
+// 	if (!file_exists) {
+// 		console.error('JSON file does not exist, aborting test.');
+// 	}
+// 	// success
+// 	else {
 
-// 		if (ckpt_type.code === 0) {
-// 			console.log('[main.js] ');
-// 			if (ckpt_type.result === "model") {
-// 				appState.mac.models.push(ckpt);
-// 			}
-// 			else if (ckpt_type.result === "lora") {
-// 				appState.mac.loras.push(ckpt);
-// 			}
-// 			else if (ckpt_type.result === "control") {
-// 				appState.mac.controls.push(ckpt);
-// 			}
-// 			console.log(`[main.js] Processing CKPT ${ j } / ${ res.result.length } : ${ res.result[i].ckpt_filename } - type: ${ ckpt_type.result }`);
-// 		}
-// 		else {
-// 			console.log(`[main.js] Processing CKPT ${ j } / ${ res.result.length } : ${ res.result[i].ckpt_filename } - error determining model type`);
-// 		}
+// 		// read the JSON
+// 		const data = await readTextFile(json_path);
+// 		console.log(`JSON file exists:`, file_exists, ' - Filesize:', data.length);
+
+// 		// Register as virtual file
+// 		await db.registerFileText('mac-custom.json', data);
+
+// 		// await conn.query(`
+// 		// 	SELECT * FROM 'community-models.csv';
+// 		// `);
+
+// 		// // Query it
+// 		// let result = await conn.query(`
+// 		// 	SELECT * FROM 'community-models.csv' LIMIT 10;
+// 		// `);
+// 		// // console.log('CSV model count query result:', result.toArray());
+
+// 		// // Convert to plain JavaScript objects
+// 		// const rows = result.toArray().map(row => row.toJSON());
+// 		// // console.log(rows);
+
 // 	}
 // }
-// else {
-// 	console.error('[main.js] Error reading Mac models:', res.error);
+// catch (error) {
+// 	console.error('Error reading CSV file:', error);
 // }
 
 
+// // Basic query
+// console.log("Basic query");
+// let q = await conn.query(`SELECT count(*)::INTEGER as v
+// FROM generate_series(0, 100) t(v)`); // Returns v = 101
+// console.log("Query result (Arrow Table):", q);
 
-// // ls Stash models
-// res = await read_ckpts("stash", "model");
-// if (res.code === 0) {
-// 	appState.mac.models = res.result;
-// }
+// // Copy of query result (JSON instead of Arrow Table)
+// console.log('Query result copy (JSON):', JSON.parse(JSON.stringify(q.toArray())));
+// console.log('');
 
-// await read_ckpts("mac", "lora");
-// await read_ckpts("mac", "control");
+// // Prepare query
+// console.log("Prepared query statement")
+// const stmt = await conn.prepare(
+// 	`SELECT (v + ?) as v FROM generate_series(0, 1000) as t(v);`
+// );
+
+// // ... and run the query with materialized results
+// const res = await stmt.query(234); // Returns 1001 entries ranging from v = 234 to 1,234
+// console.log("Statement result (Table):", res);
+// console.log('Statement result copy (JSON):',
+// 	// Bug fix explained at: https://github.com/GoogleChromeLabs/jsbi/issues/30
+// 	JSON.parse(JSON.stringify(res.toArray(), (key, value) =>
+// 		typeof value === 'bigint'
+// 			? value.toString()
+// 			: value // return everything else unchanged
+// 	))
+// );
 
 
 
 
+// ###############################################################################
+// Shut down DuckDB 
+// await conn.close();
+// await db.terminate();
+// await worker.terminate();
